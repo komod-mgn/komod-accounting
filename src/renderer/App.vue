@@ -62,4 +62,9 @@ export default {
   #app__header {
     padding: 0;
   }
+
+  /* Global ElementUI overrides */
+  .el-select {
+    width: 100%;
+  }
 </style>

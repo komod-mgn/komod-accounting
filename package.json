@@ -57,6 +57,8 @@
   "dependencies": {
     "axios": "^0.16.1",
     "element-ui": "^2.3.8",
+    "lowdb": "^1.0.0",
+    "mkdirp": "^0.5.1",
     "nanoid": "^1.0.2",
     "vue": "^2.5.16",
     "vue-electron": "^1.0.6",
@@ -64,6 +66,7 @@
     "vuex": "^2.3.1"
   },
   "devDependencies": {
+    "@types/lowdb": "^1.0.2",
     "babel-core": "^6.25.0",
     "babel-eslint": "^7.2.3",
     "babel-loader": "^7.1.1",

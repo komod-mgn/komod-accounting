@@ -4,7 +4,7 @@
     "test": {
       "presets": [
         ["env", {
-          "targets": { "node": 7 }
+          "targets": { "node": 8 }
         }],
         "stage-0"
       ],
@@ -13,7 +13,7 @@
     "main": {
       "presets": [
         ["env", {
-          "targets": { "node": 7 }
+          "targets": { "node": 8 }
         }],
         "stage-0"
       ]
@@ -21,10 +21,17 @@
     "renderer": {
       "presets": [
         ["env", {
-          "modules": false
-        }],
-        "stage-0"
-      ]
+          "modules": false,
+          "targets": {
+            "browsers": ["chrome >= 61"]
+          }
+        }]
+        // disable async/await transpilation for better debugging
+        // (babel doesn't support disabling plugins in presets,
+        // so disable preset and enable needed plugins)
+        // "stage-0"
+      ],
+      "plugins": ["transform-object-rest-spread"]
     },
     "web": {
       "presets": [

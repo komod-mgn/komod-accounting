@@ -60,7 +60,7 @@
     "fs-extra": "^6.0.1",
     "lowdb": "^1.0.0",
     "nanoid": "^1.0.2",
-    "simple-git": "github:holmok/git-js",
+    "simple-git": "^1.94.0",
     "vue": "^2.5.16",
     "vue-electron": "^1.0.6",
     "vue-router": "^2.5.3",

@@ -69,7 +69,10 @@
       :data="clients"
       border
     >
-      <!-- TODO hover over empty cells causes exception -->
+      <!--
+      TODO hover over empty cells causes exception
+      (fixed in https://github.com/ElemeFE/element/pull/11137, not yet released)
+      -->
       <el-table-column
         v-for="field in clientBaseFields"
         :key="field.name"

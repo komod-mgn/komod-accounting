@@ -1,22 +1,20 @@
 import nanoid from 'nanoid'
 
-import { dbGetClientsSync, dbUpdateClientsSync } from '@/db'
-
-const dbState = dbGetClientsSync()
+import { updateVuexState } from '@/utils'
+import { dbUpdateClients } from '@/db'
 
 export default {
 
-  /**
-   * @type {{items: Array<KomodClient>}}
-   */
-  state: !dbState || Object.keys(dbState).length === 0
-    ? {
-      /** @type {Array<KomodClient>} */
-      items: [],
-    }
-    : dbState,
+  state: {
+    /** @type {Array<KomodClient>} */
+    items: [],
+  },
 
   mutations: {
+    UPDATE_CLIENTS_STATE (state, newState) {
+      updateVuexState(state, newState)
+    },
+
     ADD_CLIENT (state, client) {
       state.items.push(client)
     },
@@ -44,7 +42,7 @@ export default {
   },
 
   actions: {
-    updateClient ({ state, commit }, client) {
+    async updateClient ({ state, commit }, client) {
       if (client.id == null) {
         commit('ADD_CLIENT', {
           ...client,
@@ -55,14 +53,14 @@ export default {
       }
 
       // sync db
-      dbUpdateClientsSync(state)
+      await dbUpdateClients(state)
     },
 
-    deleteClient ({ state, commit }, client) {
+    async deleteClient ({ state, commit }, client) {
       commit('DELETE_CLIENT', client)
 
       // sync db
-      dbUpdateClientsSync(state)
+      await dbUpdateClients(state)
     },
   },
 

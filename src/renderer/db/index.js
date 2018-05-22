@@ -1,6 +1,11 @@
 import lowdb from 'lowdb'
 import LowdbFileSync from 'lowdb/adapters/FileSync'
-import mkdirp from 'mkdirp'
+import fse from 'fs-extra'
+
+import {
+  prepare as gitPrepare,
+  commit as gitCommit,
+} from './git'
 
 const path = require('path')
 const os = require('os')
@@ -10,24 +15,34 @@ const APP_DIR_PATH = path.join(os.homedir(), APP_DIR_NAME)
 const APP_DB_NAME = 'db.json'
 const APP_DB_PATH = path.join(APP_DIR_PATH, APP_DB_NAME)
 
-// Make sure directory exists
-mkdirp.sync(APP_DIR_PATH)
+let db
 
-const adapter = new LowdbFileSync(APP_DB_PATH)
+const whenDbReady = (async function prepareDb () {
+  await fse.ensureDir(APP_DIR_PATH)
 
-const db = lowdb(adapter)
+  // TODO make file ops async?
+  db = lowdb(new LowdbFileSync(APP_DB_PATH))
 
-db.defaults({})
-  .write()
+  db.defaults({})
+    .write()
+
+  await gitPrepare(APP_DIR_PATH)
+})()
 
 /** --- Clients --- */
 
-export function dbGetClientsSync () {
+export async function dbGetClients () {
+  await whenDbReady
+
   return db.get('clients')
     .value()
 }
 
-export function dbUpdateClientsSync (clients) {
+export async function dbUpdateClients (clients) {
+  await whenDbReady
+
   db.set('clients', clients)
     .write()
+
+  await gitCommit()
 }

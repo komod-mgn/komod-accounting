@@ -153,14 +153,15 @@ export default {
       this.clientCreationModel = new KomodClient()
       this.isClientCreationModalActive = false
     },
-    submitClientCreationModal () {
-      this.$store.dispatch('updateClient', this.clientCreationModel)
+    async submitClientCreationModal () {
+      await this.$store.dispatch('updateClient', this.clientCreationModel)
+
       this.closeClientCreationModal()
     },
-    deleteClient (client) {
+    async deleteClient (client) {
       // TODO confirmation
 
-      this.$store.dispatch('deleteClient', client)
+      await this.$store.dispatch('deleteClient', client)
     },
   },
 }

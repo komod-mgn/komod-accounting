@@ -57,8 +57,8 @@
   "dependencies": {
     "axios": "^0.16.1",
     "element-ui": "^2.3.8",
+    "fs-extra": "^6.0.1",
     "lowdb": "^1.0.0",
-    "mkdirp": "^0.5.1",
     "nanoid": "^1.0.2",
     "simple-git": "github:holmok/git-js",
     "vue": "^2.5.16",

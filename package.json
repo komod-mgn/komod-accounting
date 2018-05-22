@@ -60,6 +60,7 @@
     "lowdb": "^1.0.0",
     "mkdirp": "^0.5.1",
     "nanoid": "^1.0.2",
+    "simple-git": "github:holmok/git-js",
     "vue": "^2.5.16",
     "vue-electron": "^1.0.6",
     "vue-router": "^2.5.3",

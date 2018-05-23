@@ -29,19 +29,17 @@ const whenDbReady = (async function prepareDb () {
   await gitPrepare(APP_DIR_PATH)
 })()
 
-/** --- Clients --- */
-
-export async function dbGetClients () {
+export async function dbGet (field) {
   await whenDbReady
 
-  return db.get('clients')
+  return db.get(field)
     .value()
 }
 
-export async function dbUpdateClients (clients) {
+export async function dbUpdate (field, value) {
   await whenDbReady
 
-  db.set('clients', clients)
+  db.set(field, value)
     .write()
 
   await gitCommit()

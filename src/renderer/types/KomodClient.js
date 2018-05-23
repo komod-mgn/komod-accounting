@@ -26,3 +26,13 @@ export class KomodClient {
     this.documentId = ''
   }
 }
+
+/**
+ * @param {KomodClient | null | undefined} client
+ * @return {string}
+ */
+export function stringifyKomodClient (client) {
+  return client
+    ? `${client.lastName || '<Неизв. фамилия>'} ${client.firstName || '<Неизв. имя>'}`
+    : '<Неизв. клиент>'
+}

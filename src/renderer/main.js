@@ -8,7 +8,7 @@ import ElementLocaleRu from 'element-ui/lib/locale/lang/ru-RU'
 import App from './App'
 import router from './router'
 import store from './store'
-import { dbGetClients } from './db'
+import { dbGet } from './db'
 
 if (!process.env.IS_WEB) Vue.use(require('vue-electron'))
 Vue.http = Vue.prototype.$http = axios
@@ -20,7 +20,8 @@ Vue.use(ElementUI, {
 
 ;(async function () {
   // init vuex state from db
-  store.commit('UPDATE_CLIENTS_STATE', await dbGetClients())
+  store.commit('clients/UPDATE_STATE', await dbGet('clients'))
+  store.commit('transactions/UPDATE_STATE', await dbGet('transactions'))
 
   /* eslint-disable no-new */
   new Vue({

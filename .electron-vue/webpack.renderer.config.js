@@ -18,7 +18,10 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
  * that provide pure *.vue files that need compiling
  * https://simulatedgreg.gitbooks.io/electron-vue/content/en/webpack-configurations.html#white-listing-externals
  */
-let whiteListedModules = ['vue']
+let whiteListedModules = [
+  'vue',
+  'lodash-es', // https://stackoverflow.com/a/47757474/3187607
+]
 
 let rendererConfig = {
   devtool: '#cheap-module-eval-source-map',

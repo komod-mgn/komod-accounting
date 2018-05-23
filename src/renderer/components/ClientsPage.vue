@@ -35,6 +35,7 @@
             v-if="field.type === 'enum'"
             v-model="clientCreationModel[field.name]"
             :multiple="field.multiple"
+            filterable
           >
             <el-option
               v-for="(label, key) in field.enumData"
@@ -157,14 +158,14 @@ export default {
       this.isClientCreationModalActive = false
     },
     async submitClientCreationModal () {
-      await this.$store.dispatch('updateClient', this.clientCreationModel)
+      await this.$store.dispatch('clients/updateClient', this.clientCreationModel)
 
       this.closeClientCreationModal()
     },
     async deleteClient (client) {
       // TODO confirmation
 
-      await this.$store.dispatch('deleteClient', client)
+      await this.$store.dispatch('clients/deleteClient', client)
     },
   },
 }

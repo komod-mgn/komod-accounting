@@ -1,5 +1,4 @@
 import nanoid from 'nanoid'
-import { keyBy } from 'lodash-es'
 
 import { updateVuexState } from '@/utils'
 import { dbUpdate } from '@/db'
@@ -9,18 +8,8 @@ export default {
   namespaced: true,
 
   state: {
-    /** @type {Array<KomodClient>} */
+    /** @type {Array<KomodTransaction>} */
     items: [],
-  },
-
-  getters: {
-    /**
-     * @param {Object} state
-     * @return {Object<string, KomodClient>}
-     */
-    itemsMap (state) {
-      return keyBy(state.items, 'id')
-    },
   },
 
   mutations: {
@@ -36,7 +25,7 @@ export default {
       const existingItem = state.items.find(i => i.id === item.id)
 
       if (!existingItem) {
-        throw new Error('Editing non-existent client')
+        throw new Error('Editing non-existent transaction')
       }
 
       // TODO state.items.splice ?
@@ -55,7 +44,7 @@ export default {
   },
 
   actions: {
-    async updateClient ({ state, commit }, item) {
+    async updateTransaction ({ state, commit }, item) {
       if (item.id == null) {
         commit('ADD', {
           ...item,
@@ -66,14 +55,14 @@ export default {
       }
 
       // sync db
-      await dbUpdate('cliens', state)
+      await dbUpdate('transactions', state)
     },
 
-    async deleteClient ({ state, commit }, item) {
+    async deleteTransaction ({ state, commit }, item) {
       commit('DELETE', item)
 
       // sync db
-      await dbUpdate('clients', state)
+      await dbUpdate('transactions', state)
     },
   },
 

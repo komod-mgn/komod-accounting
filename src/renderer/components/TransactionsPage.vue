@@ -15,57 +15,11 @@
       title="Создание транзакции"
       @close="closeTransactionCreationModal"
     >
-      <el-form
-        :model="transactionCreationModel"
-        :label-width="transactionCreationFormLabelWidth"
-        label-position="right"
-      >
-        <el-form-item
-          v-for="field in transactionBaseFields"
-          :key="field.name"
-          :label="field.label"
-        >
-
-          <el-input
-            v-if="field.type === 'string'"
-            v-model="transactionCreationModel[field.name]"
-          />
-
-          <el-select
-            v-if="field.type === 'enum'"
-            v-model="transactionCreationModel[field.name]"
-            :multiple="field.multiple"
-            filterable
-          >
-            <el-option
-              v-for="(label, key) in field.enumData"
-              :key="key"
-              :label="label"
-              :value="key"
-            />
-          </el-select>
-
-          <el-select
-            v-if="field.type === 'ref'"
-            v-model="transactionCreationModel[field.name]"
-            filterable
-          >
-            <el-option
-              v-for="(val, key) in field.options()"
-              :key="key"
-              :label="field.controlFormatter(val)"
-              :value="key"
-            />
-          </el-select>
-
-          <el-date-picker
-            v-if="field.type === 'datetime'"
-            v-model="transactionCreationModel[field.name]"
-            type="datetime"
-          />
-
-        </el-form-item>
-      </el-form>
+      <base-form
+        :form-data="transactionCreationModel"
+        :form-view="transactionFormView"
+        @input="({name, value}) => transactionCreationModel[name] = value"
+      />
 
       <div slot="footer">
         <el-button
@@ -84,6 +38,7 @@
       </div>
     </el-dialog>
 
+    <!-- TODO pagination -->
     <!-- TODO `:max-height` for fixed header -->
     <el-table
       :data="transactions"
@@ -124,11 +79,18 @@
 import { mapState, mapGetters } from 'vuex'
 import { KomodTransaction } from '@/types/KomodTransaction'
 import { stringifyKomodClient } from '@/types/KomodClient'
+import BaseForm from '@/components/BaseForm'
 
 export default {
   name: 'TransactionsPage',
 
+  components: {
+    BaseForm,
+  },
+
   data () {
+    const self = this
+
     return {
       isTransactionCreationModalActive: false,
       transactionCreationModel: new KomodTransaction(),
@@ -144,7 +106,9 @@ export default {
           name: 'clientId',
           label: 'Клиент',
           type: 'ref',
-          options: () => this.clientsMap,
+          get optionsMap () {
+            return self.clientsMap
+          },
           controlFormatter: (obj) => {
             return stringifyKomodClient(obj)
           },
@@ -163,11 +127,17 @@ export default {
     ...mapGetters({
       clientsMap: 'clients/itemsMap',
     }),
+
+    transactionFormView () {
+      return {
+        fields: this.transactionBaseFields,
+      }
+    },
   },
 
   methods: {
     openTransactionCreationModal () {
-      this.transactionCreationModel.date = new Date()
+      this.transactionCreationModel.date = (new Date()).toISOString()
 
       this.isTransactionCreationModalActive = true
     },

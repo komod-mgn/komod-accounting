@@ -15,38 +15,11 @@
       title="Создание клиента"
       @close="closeClientCreationModal"
     >
-      <el-form
-        :model="clientCreationModel"
-        :label-width="clientCreationFormLabelWidth"
-        label-position="right"
-      >
-        <el-form-item
-          v-for="field in clientBaseFields"
-          :key="field.name"
-          :label="field.label"
-        >
-
-          <el-input
-            v-if="field.type === 'string'"
-            v-model="clientCreationModel[field.name]"
-          />
-
-          <el-select
-            v-if="field.type === 'enum'"
-            v-model="clientCreationModel[field.name]"
-            :multiple="field.multiple"
-            filterable
-          >
-            <el-option
-              v-for="(label, key) in field.enumData"
-              :key="key"
-              :label="label"
-              :value="key"
-            />
-          </el-select>
-
-        </el-form-item>
-      </el-form>
+      <base-form
+        :form-data="clientCreationModel"
+        :form-view="clientFormView"
+        @input="({name, value}) => clientCreationModel[name] = value"
+      />
 
       <div slot="footer">
         <el-button
@@ -65,6 +38,7 @@
       </div>
     </el-dialog>
 
+    <!-- TODO pagination -->
     <!-- TODO `:max-height` for fixed header -->
     <el-table
       :data="clients"
@@ -104,9 +78,14 @@
 <script>
 import { mapState } from 'vuex'
 import { KomodClient, KomodClientStatusEnum } from '@/types/KomodClient'
+import BaseForm from '@/components/BaseForm'
 
 export default {
   name: 'ClientsPage',
+
+  components: {
+    BaseForm,
+  },
 
   data: () => ({
     isClientCreationModalActive: false,
@@ -134,7 +113,7 @@ export default {
         label: 'Статус',
         type: 'enum',
         multiple: true,
-        enumData: KomodClientStatusEnum,
+        optionsMap: KomodClientStatusEnum,
         tableFormatter: (row, col, vals) => vals
           .map(val => KomodClientStatusEnum[val])
           .join(', '),
@@ -146,6 +125,12 @@ export default {
     ...mapState({
       clients: state => state.clients.items,
     }),
+
+    clientFormView () {
+      return {
+        fields: this.clientBaseFields,
+      }
+    },
   },
 
   methods: {

@@ -64,7 +64,9 @@ export default {
   }
 
   /* Global ElementUI overrides */
-  .el-select {
+  .el-select,
+  .el-date-editor.el-input
+  {
     width: 100%;
   }
 </style>

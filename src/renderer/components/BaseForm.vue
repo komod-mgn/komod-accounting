@@ -45,12 +45,12 @@
         />
       </el-select>
 
-      <!-- TODO changing causes errors of mutability -->
+      <!-- Transform date string to and from Date object -->
       <el-date-picker
         v-if="field.type === 'datetime'"
-        :value="formData[field.name]"
+        :value="toDateObject(formData[field.name])"
         type="datetime"
-        @input="val => changeField(field.name, val)"
+        @input="val => changeField(field.name, toDateISOString(val))"
       />
 
     </el-form-item>
@@ -58,6 +58,8 @@
 </template>
 
 <script>
+import { isString, isDate } from 'lodash-es'
+
 export default {
   name: 'BaseForm',
 
@@ -81,6 +83,26 @@ export default {
         name: fieldName,
         value,
       })
+    },
+
+    /**
+     * @param {string | null | undefined} dateISOstr
+     * @return {Date | null | undefined}
+     */
+    toDateObject (dateISOstr) {
+      return isString(dateISOstr)
+        ? new Date(dateISOstr)
+        : dateISOstr
+    },
+
+    /**
+     * @param {Date | null | undefined} date
+     * @return {string | null | undefined}
+     */
+    toDateISOString (date) {
+      return isDate(date)
+        ? date.toISOString()
+        : date
     },
   },
 }

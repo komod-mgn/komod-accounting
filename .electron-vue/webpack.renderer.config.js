@@ -20,7 +20,13 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
  */
 let whiteListedModules = [
   'vue',
-  'lodash-es', // https://stackoverflow.com/a/47757474/3187607
+
+  // https://github.com/ElemeFE/element/issues/7690#issuecomment-362499312
+  // https://github.com/ElemeFE/element/issues/9104#issuecomment-354930297
+  'element-ui',
+
+  // https://stackoverflow.com/a/47757474/3187607
+  'lodash-es',
 ]
 
 let rendererConfig = {

@@ -2,12 +2,12 @@
   <div id="app">
     <el-header id="app__header">
       <el-menu
-        :default-active="activeNavIndex"
-        :router="true"
+        :default-active="currentRouterPath"
+        router
+        mode="horizontal"
         background-color="#4fc08d"
         text-color="#c0e8d6"
         active-text-color="#ffffff"
-        mode="horizontal"
       >
 
         <el-menu-item index="/">
@@ -35,8 +35,12 @@
 export default {
   name: 'KomodAccounting',
   data: () => ({
-    activeNavIndex: '/',
   }),
+  computed: {
+    currentRouterPath () {
+      return this.$store.state.route.path
+    },
+  },
   methods: {
   },
 }

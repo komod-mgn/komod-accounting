@@ -1,4 +1,5 @@
 import Vue from 'vue'
+import { sync } from 'vuex-router-sync'
 import axios from 'axios'
 
 import ElementUI from 'element-ui'
@@ -13,6 +14,8 @@ import { dbGet } from './db'
 if (!process.env.IS_WEB) Vue.use(require('vue-electron'))
 Vue.http = Vue.prototype.$http = axios
 Vue.config.productionTip = false
+
+sync(store, router)
 
 Vue.use(ElementUI, {
   locale: ElementLocaleRu,

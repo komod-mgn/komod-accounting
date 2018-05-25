@@ -211,6 +211,7 @@ export default {
     },
     async deleteClient (client) {
       // TODO confirmation
+      // http://element.eleme.io/#/en-US/component/popover#nested-operation
 
       await this.$store.dispatch('clients/deleteClient', client)
     },

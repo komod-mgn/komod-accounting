@@ -39,11 +39,16 @@
     </el-dialog>
 
     <!-- TODO pagination -->
+    <!-- TODO sorting -->
     <!-- TODO `:max-height` for fixed header -->
     <el-table
       :data="transactions"
       border
     >
+      <el-table-column
+        type="index"
+      />
+
       <!--
       TODO hover over empty cells causes exception
       (fixed in https://github.com/ElemeFE/element/pull/11137, not yet released)
@@ -56,6 +61,10 @@
         :formatter="field.tableFormatter"
       />
 
+      <!--
+      TODO `highlight-current-row` for table and
+      move actions from a column into an action panel
+      -->
       <el-table-column
         fixed="right"
         label="Действия"
@@ -94,7 +103,6 @@ export default {
     return {
       isTransactionCreationModalActive: false,
       transactionCreationModel: new KomodTransaction(),
-      transactionCreationFormLabelWidth: '100px',
       // TODO
       transactionBaseFields: [
         {
@@ -115,6 +123,11 @@ export default {
           tableFormatter: (row, col, id) => {
             return stringifyKomodClient(this.clientsMap[id])
           },
+        },
+        {
+          name: 'itemsAmount',
+          label: 'Кол-во вещей',
+          type: 'number',
         },
       ],
     }

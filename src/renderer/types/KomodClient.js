@@ -23,7 +23,11 @@ export class KomodClient {
     this.middleName = ''
     /** @type {Array<KomodClientStatusEnumValue>} */
     this.status = []
-    this.documentId = ''
+    this.idDocument = ''
+    this.phoneNumber = ''
+
+    // So far hardcoded default
+    this.seasonItemsLimit = 12
   }
 }
 

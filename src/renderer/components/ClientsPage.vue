@@ -39,23 +39,35 @@
     </el-dialog>
 
     <!-- TODO pagination -->
+    <!-- TODO sorting -->
     <!-- TODO `:max-height` for fixed header -->
     <el-table
       :data="clients"
       border
     >
+      <el-table-column
+        type="index"
+      />
+
       <!--
       TODO hover over empty cells causes exception
       (fixed in https://github.com/ElemeFE/element/pull/11137, not yet released)
       -->
       <el-table-column
-        v-for="field in clientBaseFields"
+        v-for="field in tableFields"
         :key="field.name"
         :prop="field.name"
         :label="field.label"
         :formatter="field.tableFormatter"
+        :min-width="field.minWidth"
+        resizable
+        show-overflow-tooltip
       />
 
+      <!--
+      TODO `highlight-current-row` for table and
+      move actions from a column into an action panel
+      -->
       <el-table-column
         fixed="right"
         label="Действия"
@@ -76,6 +88,7 @@
 </template>
 
 <script>
+import { concat } from 'lodash-es'
 import { mapState } from 'vuex'
 import { KomodClient, KomodClientStatusEnum } from '@/types/KomodClient'
 import BaseForm from '@/components/BaseForm'
@@ -90,33 +103,75 @@ export default {
   data: () => ({
     isClientCreationModalActive: false,
     clientCreationModel: new KomodClient(),
-    clientCreationFormLabelWidth: '100px',
     // TODO
     clientBaseFields: [
       {
         name: 'lastName',
         label: 'Фамилия',
         type: 'string',
+        minWidth: 100,
       },
       {
         name: 'firstName',
         label: 'Имя',
         type: 'string',
+        minWidth: 100,
       },
       {
         name: 'middleName',
         label: 'Отчество',
         type: 'string',
+        minWidth: 100,
       },
       {
         name: 'status',
         label: 'Статус',
         type: 'enum',
+        minWidth: 150,
         multiple: true,
         optionsMap: KomodClientStatusEnum,
         tableFormatter: (row, col, vals) => vals
           .map(val => KomodClientStatusEnum[val])
           .join(', '),
+      },
+      {
+        name: 'idDocument',
+        label: 'Удостоверение №',
+        type: 'string',
+        minWidth: 150,
+      },
+      {
+        name: 'phoneNumber',
+        label: 'Телефон',
+        type: 'string',
+        minWidth: 100,
+      },
+      {
+        name: 'seasonItemsLimit',
+        label: 'Норма на сезон',
+        type: 'number',
+        minWidth: 90,
+        min: 0,
+      },
+    ],
+    clientComputedFields: [
+      {
+        name: 'itemsAmountCurrentSeason',
+        label: 'Кол-во взятых вещей (сезон)',
+        type: 'number',
+        minWidth: 100,
+      },
+      {
+        name: 'itemsAmountTotal',
+        label: 'Кол-во взятых вещей (всего)',
+        type: 'number',
+        minWidth: 100,
+      },
+      {
+        name: 'lastTransaction',
+        label: 'Последнее посещение',
+        type: 'datetime',
+        minWidth: 100,
       },
     ],
   }),
@@ -125,6 +180,10 @@ export default {
     ...mapState({
       clients: state => state.clients.items,
     }),
+
+    tableFields () {
+      return concat(this.clientBaseFields, this.clientComputedFields)
+    },
 
     clientFormView () {
       return {

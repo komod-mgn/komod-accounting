@@ -13,6 +13,16 @@
       <el-input
         v-if="field.type === 'string'"
         :value="formData[field.name]"
+        clearable
+        @input="val => changeField(field.name, val)"
+      />
+
+      <el-input-number
+        v-if="field.type === 'number'"
+        :value="formData[field.name]"
+        :min="field.min"
+        :max="field.max"
+        controls-position="right"
         @input="val => changeField(field.name, val)"
       />
 
@@ -34,6 +44,7 @@
       <el-select
         v-if="field.type === 'ref'"
         :value="formData[field.name]"
+        clearable
         filterable
         @input="val => changeField(field.name, val)"
       >

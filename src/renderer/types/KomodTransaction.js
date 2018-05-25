@@ -7,7 +7,7 @@ export class KomodTransaction {
      * @type {string}
      */
     this.date = ''
-    this.clientId = null
-    // TODO other fields
+    this.clientId = ''
+    this.itemsAmount = 0
   }
 }

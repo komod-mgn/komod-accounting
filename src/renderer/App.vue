@@ -10,6 +10,27 @@
         active-text-color="#ffffff"
       >
 
+        <div
+          class="router-navigation"
+        >
+          <el-button-group>
+            <el-button
+              plain
+              round
+              size="mini"
+              icon="el-icon-arrow-left"
+              @click="goBack"
+            />
+            <el-button
+              plain
+              round
+              size="mini"
+              icon="el-icon-arrow-right"
+              @click="goForward"
+            />
+          </el-button-group>
+        </div>
+
         <el-menu-item index="/">
           Electron Vue starter landing
         </el-menu-item>
@@ -42,6 +63,12 @@ export default {
     },
   },
   methods: {
+    goBack () {
+      this.$router.go(-1)
+    },
+    goForward () {
+      this.$router.go(1)
+    },
   },
 }
 </script>
@@ -64,7 +91,28 @@ export default {
   }
 
   #app__header {
+    --header-height: 40px;
+
+    /* Override `el-header` `height` prop
+    to only have the source of truth in CSS */
+    height: var(--header-height) !important;
     padding: 0;
+  }
+
+  #app__header .el-menu-item {
+    height: var(--header-height);
+    line-height: var(--header-height);
+  }
+
+  .router-navigation {
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+  }
+
+  .el-menu .router-navigation {
+    float: right;
+    margin-right: 10px;
   }
 
   .action-panel {

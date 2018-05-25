@@ -1,42 +1,49 @@
 <template>
   <div>
-    <el-button
-      round
-      type="primary"
-      icon="el-icon-plus"
-      @click="openClientCreationModal"
+    <el-card
+      :body-style="{
+        padding: '10px',
+      }"
+      class="action-panel"
     >
-      Создать
-    </el-button>
+      <el-button
+        round
+        type="primary"
+        icon="el-icon-plus"
+        @click="openClientCreationModal"
+      >
+        Создать
+      </el-button>
 
-    <el-dialog
-      :visible="isClientCreationModalActive"
-      :close-on-click-modal="false"
-      title="Создание клиента"
-      @close="closeClientCreationModal"
-    >
-      <base-form
-        :form-data="clientCreationModel"
-        :form-view="clientFormView"
-        @input="({name, value}) => clientCreationModel[name] = value"
-      />
+      <el-dialog
+        :visible="isClientCreationModalActive"
+        :close-on-click-modal="false"
+        title="Создание клиента"
+        @close="closeClientCreationModal"
+      >
+        <base-form
+          :form-data="clientCreationModel"
+          :form-view="clientFormView"
+          @input="({name, value}) => clientCreationModel[name] = value"
+        />
 
-      <div slot="footer">
-        <el-button
-          plain
-          type="danger"
-          @click="closeClientCreationModal"
-        >
-          Отмена
-        </el-button>
-        <el-button
-          type="success"
-          @click="submitClientCreationModal"
-        >
-          Создать
-        </el-button>
-      </div>
-    </el-dialog>
+        <div slot="footer">
+          <el-button
+            plain
+            type="danger"
+            @click="closeClientCreationModal"
+          >
+            Отмена
+          </el-button>
+          <el-button
+            type="success"
+            @click="submitClientCreationModal"
+          >
+            Создать
+          </el-button>
+        </div>
+      </el-dialog>
+    </el-card>
 
     <!-- TODO pagination -->
     <!-- TODO sorting -->
@@ -211,6 +218,6 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 
 </style>

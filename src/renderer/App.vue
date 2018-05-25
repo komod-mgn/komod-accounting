@@ -63,6 +63,10 @@ export default {
     padding: 0;
   }
 
+  .action-panel {
+    margin-bottom: 20px;
+  }
+
   /* Global ElementUI overrides */
   .el-select,
   .el-date-editor.el-input

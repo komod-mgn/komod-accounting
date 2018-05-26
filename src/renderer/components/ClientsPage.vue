@@ -10,34 +10,34 @@
         round
         type="primary"
         icon="el-icon-plus"
-        @click="openClientCreationModal"
+        @click="openItemCreationModal"
       >
         Создать
       </el-button>
 
       <el-dialog
-        :visible="isClientCreationModalActive"
+        :visible="isItemCreationModalActive"
         :close-on-click-modal="false"
-        title="Создание клиента"
-        @close="closeClientCreationModal"
+        title="Создание"
+        @close="closeItemCreationModal"
       >
         <base-form
-          :form-data="clientCreationModel"
-          :form-view="clientFormView"
-          @input="({name, value}) => clientCreationModel[name] = value"
+          :form-data="itemCreationModel"
+          :form-view="itemFormView"
+          @input="({name, value}) => itemCreationModel[name] = value"
         />
 
         <div slot="footer">
           <el-button
             plain
             type="danger"
-            @click="closeClientCreationModal"
+            @click="closeItemCreationModal"
           >
             Отмена
           </el-button>
           <el-button
             type="success"
-            @click="submitClientCreationModal"
+            @click="submitItemCreationModal"
           >
             Создать
           </el-button>
@@ -49,7 +49,7 @@
     <!-- TODO sorting -->
     <!-- TODO `:max-height` for fixed header -->
     <el-table
-      :data="clients"
+      :data="items"
       border
     >
       <el-table-column
@@ -80,7 +80,7 @@
             plain
             type="danger"
             size="small"
-            @click="deleteClient(clients[scope.$index])"
+            @click="deleteItem(items[scope.$index])"
           >
             Удалить
           </el-button>
@@ -96,6 +96,8 @@ import { mapState } from 'vuex'
 import { KomodClient, KomodClientStatusEnum } from '@/types/KomodClient'
 import BaseForm from '@/components/BaseForm'
 
+const storeModuleName = 'clients'
+
 export default {
   name: 'ClientsPage',
 
@@ -104,10 +106,11 @@ export default {
   },
 
   data: () => ({
-    isClientCreationModalActive: false,
-    clientCreationModel: new KomodClient(),
+    isItemCreationModalActive: false,
+    itemCreationModel: new KomodClient(),
+
     // TODO
-    clientBaseFields: [
+    itemBaseFields: [
       {
         name: 'lastName',
         label: 'Фамилия',
@@ -157,7 +160,7 @@ export default {
         min: 0,
       },
     ],
-    clientComputedFields: [
+    itemComputedFields: [
       {
         name: 'itemsAmountCurrentSeason',
         label: 'Кол-во взятых вещей (сезон)',
@@ -181,39 +184,40 @@ export default {
 
   computed: {
     ...mapState({
-      clients: state => state.clients.items,
+      items: state => state[storeModuleName].items,
     }),
 
     tableFields () {
-      return concat(this.clientBaseFields, this.clientComputedFields)
+      return concat(this.itemBaseFields, this.itemComputedFields)
     },
 
-    clientFormView () {
+    itemFormView () {
       return {
-        fields: this.clientBaseFields,
+        fields: this.itemBaseFields,
       }
     },
   },
 
   methods: {
-    openClientCreationModal () {
-      this.isClientCreationModalActive = true
+    openItemCreationModal () {
+      this.isItemCreationModalActive = true
     },
-    closeClientCreationModal () {
+    closeItemCreationModal () {
       // reset value
-      this.clientCreationModel = new KomodClient()
-      this.isClientCreationModalActive = false
+      this.itemCreationModel = new KomodClient()
+      this.isItemCreationModalActive = false
     },
-    async submitClientCreationModal () {
-      await this.$store.dispatch('clients/updateClient', this.clientCreationModel)
+    async submitItemCreationModal () {
+      await this.$store.dispatch(`${storeModuleName}/updateClient`, this.itemCreationModel)
 
-      this.closeClientCreationModal()
+      this.closeItemCreationModal()
     },
-    async deleteClient (client) {
+
+    async deleteItem (item) {
       // TODO confirmation
       // http://element.eleme.io/#/en-US/component/popover#nested-operation
 
-      await this.$store.dispatch('clients/deleteClient', client)
+      await this.$store.dispatch(`${storeModuleName}/deleteClient`, item)
     },
   },
 }

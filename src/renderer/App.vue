@@ -19,7 +19,7 @@
               marginRight: '10px',
               color: 'white',
             }"
-            v-text="$route.fullPath"
+            v-text="$store.state.route.fullPath"
           />
 
           <el-button-group>

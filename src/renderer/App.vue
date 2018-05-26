@@ -13,6 +13,15 @@
         <div
           class="router-navigation"
         >
+          <span
+            v-if="isDev"
+            :style="{
+              marginRight: '10px',
+              color: 'white',
+            }"
+            v-text="$route.fullPath"
+          />
+
           <el-button-group>
             <el-button
               plain
@@ -60,6 +69,9 @@ export default {
   computed: {
     currentRouterPath () {
       return this.$store.state.route.path
+    },
+    isDev () {
+      return process.env.NODE_ENV !== 'production'
     },
   },
   methods: {

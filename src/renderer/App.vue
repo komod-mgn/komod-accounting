@@ -137,4 +137,11 @@ export default {
   {
     width: 100%;
   }
+
+  .el-table__row {
+    cursor: pointer;
+  }
+  .el-table__row.--selected-row {
+    background-color: #eaf3e6;
+  }
 </style>

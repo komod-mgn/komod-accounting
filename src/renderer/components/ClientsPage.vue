@@ -39,7 +39,47 @@
             type="success"
             @click="submitItemCreationModal"
           >
-            Создать
+            Сохранить
+          </el-button>
+        </div>
+      </el-dialog>
+
+      <el-button
+        v-if="currentSelectedItem"
+        round
+        type="warning"
+        icon="el-icon-edit-outline"
+        @click="openItemEditingModal"
+      >
+        Редактировать
+      </el-button>
+
+      <el-dialog
+        v-if="isItemEditingModalActive"
+        :visible="isItemEditingModalActive"
+        :close-on-click-modal="false"
+        title="Редактирование"
+        @close="closeItemEditingModal"
+      >
+        <base-form-with-intermediate-model
+          :initial-form-data="currentSelectedItem"
+          :form-view="itemFormView"
+          @model-change="handleItemEditingChange"
+        />
+
+        <div slot="footer">
+          <el-button
+            plain
+            type="danger"
+            @click="closeItemEditingModal"
+          >
+            Отмена
+          </el-button>
+          <el-button
+            type="success"
+            @click="submitItemEditingModal"
+          >
+            Сохранить
           </el-button>
         </div>
       </el-dialog>
@@ -50,7 +90,9 @@
     <!-- TODO `:max-height` for fixed header -->
     <el-table
       :data="items"
+      :row-class-name="getRowClass"
       border
+      @row-click="selectItem"
     >
       <el-table-column
         type="index"
@@ -68,8 +110,7 @@
       />
 
       <!--
-      TODO `highlight-current-row` for table and
-      move actions from a column into an action panel
+      TODO move actions from a column into an action panel
       -->
       <el-table-column
         fixed="right"
@@ -91,10 +132,16 @@
 </template>
 
 <script>
-import { concat } from 'lodash-es'
-import { mapState } from 'vuex'
+import { concat, omit } from 'lodash-es'
+import { mapState, mapGetters } from 'vuex'
+import {
+  QUERY_PARAM_ID,
+  QUERY_PARAM_MODE,
+  QUERY_PARAM_MODE_EDIT,
+} from '@/router/table-view-constants'
 import { KomodClient, KomodClientStatusEnum } from '@/types/KomodClient'
 import BaseForm from '@/components/BaseForm'
+import BaseFormWithIntermediateModel from '@/components/BaseFormWithIntermediateModel'
 
 const storeModuleName = 'clients'
 
@@ -103,6 +150,7 @@ export default {
 
   components: {
     BaseForm,
+    BaseFormWithIntermediateModel,
   },
 
   data: () => ({
@@ -180,12 +228,21 @@ export default {
         minWidth: 100,
       },
     ],
+
+    itemEditingModel: null,
   }),
 
   computed: {
     ...mapState({
       items: state => state[storeModuleName].items,
     }),
+    ...mapGetters({
+      itemsMap: `${storeModuleName}/itemsMap`,
+    }),
+
+    currentSelectedItem () {
+      return this.itemsMap[this.$store.state.route.query[QUERY_PARAM_ID]] || null
+    },
 
     tableFields () {
       return concat(this.itemBaseFields, this.itemComputedFields)
@@ -196,9 +253,38 @@ export default {
         fields: this.itemBaseFields,
       }
     },
+
+    isItemEditingModalActive () {
+      return (
+        this.currentSelectedItem &&
+        this.$store.state.route.query[QUERY_PARAM_MODE] === QUERY_PARAM_MODE_EDIT
+      )
+    },
   },
 
   methods: {
+    selectItem (newSelectedItem) {
+      this.$router.push({
+        query: {
+          ...omit(this.$store.state.route.query, QUERY_PARAM_MODE),
+          [QUERY_PARAM_ID]: newSelectedItem.id,
+        },
+      })
+    },
+
+    getRowClass ({ row, rowIndex }) {
+      if (
+        this.currentSelectedItem &&
+        this.currentSelectedItem.id === row.id
+      ) {
+        return '--selected-row'
+      }
+
+      return ''
+    },
+
+    // --- Creation ---
+
     openItemCreationModal () {
       this.isItemCreationModalActive = true
     },
@@ -212,6 +298,36 @@ export default {
 
       this.closeItemCreationModal()
     },
+
+    // --- Editing ---
+
+    openItemEditingModal () {
+      if (!this.currentSelectedItem) {
+        throw new Error('An item must be selected before editing')
+      }
+
+      this.$router.push({
+        query: {
+          ...this.$store.state.route.query,
+          [QUERY_PARAM_MODE]: QUERY_PARAM_MODE_EDIT,
+        },
+      })
+    },
+    closeItemEditingModal () {
+      this.$router.push({
+        query: omit(this.$store.state.route.query, QUERY_PARAM_MODE),
+      })
+    },
+    handleItemEditingChange (newItem) {
+      this.itemEditingModel = newItem
+    },
+    async submitItemEditingModal () {
+      await this.$store.dispatch(`${storeModuleName}/updateClient`, this.itemEditingModel)
+
+      this.closeItemEditingModal()
+    },
+
+    // --- Deleting ---
 
     async deleteItem (item) {
       // TODO confirmation

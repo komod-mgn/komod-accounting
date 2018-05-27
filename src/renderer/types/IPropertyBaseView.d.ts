@@ -17,17 +17,20 @@ export default interface IPropertyBaseView {
     label : string
     type : TPropertyType
 
-    // TODO divide field and column properties
-
     // Columns
     minWidth ?: number
 
-    // number
+    // number - controls
     min ?: number
     max ?: number
 
-    // enum, ref
+    // enum, ref - controls
     optionsMap ?: IPropertyOptionsMap
     multiple ?: boolean
     controlFormatter ?: (od: TPropertyOptionDescription) => string
+    // enum, ref - columns
+    tableFormatter ?: (row: Object, column: Object, value: any) => string,
+    // ref - columns
+    hrefModuleName ?: string
+    hrefQueryIdParam ?: string
 }

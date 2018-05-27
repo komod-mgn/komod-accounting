@@ -1,5 +1,5 @@
-import IPropertyFieldView from './IPropertyFieldView'
+import IPropertyBaseView from './IPropertyBaseView';
 
 export default interface IFormView {
-    fields : Array<IPropertyFieldView>
+    fields : Array<IPropertyBaseView>
 }

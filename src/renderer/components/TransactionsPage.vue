@@ -55,7 +55,30 @@
         :prop="field.name"
         :label="field.label"
         :formatter="field.tableFormatter"
-      />
+      >
+        <template slot-scope="scope">
+          <!-- refs to hrefs -->
+          <router-link
+            v-if="field.type === 'ref' && field.hrefModuleName"
+            :to="{
+              path: field.hrefModuleName,
+              query: {
+                [field.hrefQueryIdParam]: scope.row[field.name],
+              },
+            }"
+            v-text="field.tableFormatter(scope.row, scope.column, scope.row[field.name])"
+          />
+
+          <!-- Default formatting -->
+          <template
+            v-else
+          >{{ (
+            field.tableFormatter
+              ? field.tableFormatter(scope.row, scope.column, scope.row[field.name])
+              : scope.row[field.name]
+          ) }}</template>
+        </template>
+      </el-table-column>
 
       <!--
       TODO `highlight-current-row` for table and
@@ -82,6 +105,12 @@
 
 <script>
 import { mapState, mapGetters } from 'vuex'
+import {
+  QUERY_PARAM_ID,
+  // QUERY_PARAM_MODE,
+  // QUERY_PARAM_MODE_CREATE,
+  // QUERY_PARAM_MODE_EDIT,
+} from '@/router/table-view-constants'
 import { KomodTransaction } from '@/types/KomodTransaction'
 import { stringifyKomodClient } from '@/types/KomodClient'
 import BaseForm from '@/components/BaseForm'
@@ -119,6 +148,8 @@ export default {
           tableFormatter: (row, col, id) => {
             return stringifyKomodClient(this.clientsMap[id])
           },
+          hrefModuleName: 'clients',
+          hrefQueryIdParam: QUERY_PARAM_ID,
         },
         {
           name: 'itemsAmount',

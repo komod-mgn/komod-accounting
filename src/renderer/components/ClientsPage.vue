@@ -185,7 +185,6 @@ export default {
   },
 
   data: () => ({
-    // TODO
     itemBaseProperties: [
       {
         name: 'lastName',

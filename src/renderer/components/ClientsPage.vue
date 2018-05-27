@@ -96,6 +96,8 @@
     >
       <el-table-column
         type="index"
+        align="center"
+        header-align="center"
       />
 
       <el-table-column
@@ -105,6 +107,7 @@
         :label="field.label"
         :formatter="field.tableFormatter"
         :min-width="field.minWidth"
+        header-align="center"
         resizable
         show-overflow-tooltip
       />

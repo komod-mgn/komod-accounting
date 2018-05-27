@@ -130,6 +130,9 @@ export default {
   .action-panel {
     margin-bottom: 20px;
   }
+  .action-panel__item + .action-panel__item {
+    margin-left: 10px;
+  }
 
   /* Global ElementUI overrides */
   .el-select,

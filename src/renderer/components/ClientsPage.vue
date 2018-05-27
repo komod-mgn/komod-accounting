@@ -10,6 +10,7 @@
         round
         type="primary"
         icon="el-icon-plus"
+        class="action-panel__item"
         @click="openItemCreationModal"
       >
         Создать
@@ -20,20 +21,50 @@
         round
         type="warning"
         icon="el-icon-edit-outline"
+        class="action-panel__item"
         @click="openItemEditingModal"
       >
         Редактировать
       </el-button>
 
-      <el-button
+      <el-popover
         v-if="currentSelectedItem"
-        round
-        type="danger"
-        icon="el-icon-delete"
-        @click="deleteItem(currentSelectedItem)"
+        v-model="isDeleteConfirmationVisible"
+        class="action-panel__item"
       >
-        Удалить
-      </el-button>
+        <el-button
+          slot="reference"
+          round
+          type="danger"
+          icon="el-icon-delete"
+        >
+          Удалить
+        </el-button>
+
+        <p>Вы уверены, что хотите удалить текущий элемент?</p>
+        <div
+          :style="{
+            marginTop: '10px',
+            textAlign: 'right',
+          }"
+        >
+          <el-button
+            plain
+            size="mini"
+            @click="isDeleteConfirmationVisible = false"
+          >
+            Отмена
+          </el-button>
+          <el-button
+            plain
+            type="danger"
+            size="mini"
+            @click="isDeleteConfirmationVisible = false; deleteCurrentItem()"
+          >
+            Удалить
+          </el-button>
+        </div>
+      </el-popover>
 
       <!--
       Держать "невидимые" элементы модалок последними,
@@ -229,6 +260,7 @@ export default {
 
     lastItemCreationModel: null,
     lastItemEditingModel: null,
+    isDeleteConfirmationVisible: false,
   }),
 
   computed: {
@@ -322,7 +354,7 @@ export default {
     },
     openItemEditingModal () {
       if (!this.currentSelectedItem) {
-        throw new Error('An item must be selected before editing')
+        throw new Error('An item must be selected to be edited')
       }
 
       this.$router.push({
@@ -348,15 +380,12 @@ export default {
 
     // --- Deleting ---
 
-    async deleteItem (item) {
-      if (!item) {
-        throw new Error('An item must specified to be deleted')
+    async deleteCurrentItem () {
+      if (!this.currentSelectedItem) {
+        throw new Error('An item must be selected to be deleted')
       }
 
-      // TODO confirmation
-      // http://element.eleme.io/#/en-US/component/popover#nested-operation
-
-      await this.$store.dispatch(`${storeModuleName}/deleteClient`, item)
+      await this.$store.dispatch(`${storeModuleName}/deleteClient`, this.currentSelectedItem)
 
       this.$router.push({
         query: omit(this.$store.state.route.query, [QUERY_PARAM_ID, QUERY_PARAM_MODE]),

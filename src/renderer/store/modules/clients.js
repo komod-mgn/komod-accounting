@@ -66,7 +66,7 @@ export default {
       }
 
       // sync db
-      await dbUpdate('cliens', state)
+      await dbUpdate('clients', state)
     },
 
     async deleteClient ({ state, commit }, item) {

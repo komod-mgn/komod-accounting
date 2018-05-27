@@ -14,7 +14,7 @@ import BaseForm from '@/components/BaseForm'
  * Компонент, имеющий промежуточную модель для работы с формой,
  * которая агрегирует множество изменений полей в объект.
  * Эта промежуточная модель инициализируется при создании компонента,
- * и не реагирует на изменения `initialFormData`.
+ * используя переданную функцию `getFormDataTemplate`.
  */
 export default {
   name: 'BaseFormWithIntermediateModel',
@@ -24,10 +24,11 @@ export default {
   },
 
   props: {
-    initialFormData: {
-      type: Object,
+    getFormDataTemplate: {
+      type: Function,
       required: true,
     },
+
     /**
      * @type {IFormView}
      */
@@ -42,7 +43,7 @@ export default {
   }),
 
   created () {
-    this.intermediateModel = cloneDeep(this.$props.initialFormData)
+    this.intermediateModel = cloneDeep(this.$props.getFormDataTemplate())
   },
 
   methods: {

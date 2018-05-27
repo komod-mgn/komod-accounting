@@ -40,15 +40,16 @@
       чтобы они не разбивали селекторы `.el-button + .el-button`
       -->
       <el-dialog
+        v-if="isItemCreationModalActive"
         :visible="isItemCreationModalActive"
         :close-on-click-modal="false"
         title="Создание"
         @close="closeItemCreationModal"
       >
-        <base-form
-          :form-data="itemCreationModel"
+        <base-form-with-intermediate-model
+          :get-form-data-template="getItemCreationTemplateModel"
           :form-view="itemFormView"
-          @input="({name, value}) => itemCreationModel[name] = value"
+          @model-change="handleItemCreationChange"
         />
 
         <div slot="footer">
@@ -76,7 +77,7 @@
         @close="closeItemEditingModal"
       >
         <base-form-with-intermediate-model
-          :initial-form-data="currentSelectedItem"
+          :get-form-data-template="getItemEditingTemplateModel"
           :form-view="itemFormView"
           @model-change="handleItemEditingChange"
         />
@@ -115,7 +116,7 @@
       />
 
       <el-table-column
-        v-for="field in tableFields"
+        v-for="field in tableProperties"
         :key="field.name"
         :prop="field.name"
         :label="field.label"
@@ -135,6 +136,7 @@ import { mapState, mapGetters } from 'vuex'
 import {
   QUERY_PARAM_ID,
   QUERY_PARAM_MODE,
+  QUERY_PARAM_MODE_CREATE,
   QUERY_PARAM_MODE_EDIT,
 } from '@/router/table-view-constants'
 import { KomodClient, KomodClientStatusEnum } from '@/types/KomodClient'
@@ -152,11 +154,8 @@ export default {
   },
 
   data: () => ({
-    isItemCreationModalActive: false,
-    itemCreationModel: new KomodClient(),
-
     // TODO
-    itemBaseFields: [
+    itemBaseProperties: [
       {
         name: 'lastName',
         label: 'Фамилия',
@@ -206,7 +205,8 @@ export default {
         min: 0,
       },
     ],
-    itemComputedFields: [
+
+    itemComputedProperties: [
       {
         name: 'itemsAmountCurrentSeason',
         label: 'Кол-во взятых вещей (сезон)',
@@ -227,7 +227,8 @@ export default {
       },
     ],
 
-    itemEditingModel: null,
+    lastItemCreationModel: null,
+    lastItemEditingModel: null,
   }),
 
   computed: {
@@ -242,14 +243,20 @@ export default {
       return this.itemsMap[this.$store.state.route.query[QUERY_PARAM_ID]] || null
     },
 
-    tableFields () {
-      return concat(this.itemBaseFields, this.itemComputedFields)
+    tableProperties () {
+      return concat(this.itemBaseProperties, this.itemComputedProperties)
     },
 
     itemFormView () {
       return {
-        fields: this.itemBaseFields,
+        fields: this.itemBaseProperties,
       }
+    },
+
+    isItemCreationModalActive () {
+      return (
+        this.$store.state.route.query[QUERY_PARAM_MODE] === QUERY_PARAM_MODE_CREATE
+      )
     },
 
     isItemEditingModalActive () {
@@ -283,22 +290,36 @@ export default {
 
     // --- Creation ---
 
+    getItemCreationTemplateModel () {
+      return new KomodClient()
+    },
     openItemCreationModal () {
-      this.isItemCreationModalActive = true
+      this.$router.push({
+        query: {
+          ...this.$store.state.route.query,
+          [QUERY_PARAM_MODE]: QUERY_PARAM_MODE_CREATE,
+        },
+      })
     },
     closeItemCreationModal () {
-      // reset value
-      this.itemCreationModel = new KomodClient()
-      this.isItemCreationModalActive = false
+      this.$router.push({
+        query: omit(this.$store.state.route.query, QUERY_PARAM_MODE),
+      })
+    },
+    handleItemCreationChange (newItem) {
+      this.lastItemCreationModel = newItem
     },
     async submitItemCreationModal () {
-      await this.$store.dispatch(`${storeModuleName}/updateClient`, this.itemCreationModel)
+      await this.$store.dispatch(`${storeModuleName}/updateClient`, this.lastItemCreationModel)
 
       this.closeItemCreationModal()
     },
 
     // --- Editing ---
 
+    getItemEditingTemplateModel () {
+      return this.currentSelectedItem
+    },
     openItemEditingModal () {
       if (!this.currentSelectedItem) {
         throw new Error('An item must be selected before editing')
@@ -317,10 +338,10 @@ export default {
       })
     },
     handleItemEditingChange (newItem) {
-      this.itemEditingModel = newItem
+      this.lastItemEditingModel = newItem
     },
     async submitItemEditingModal () {
-      await this.$store.dispatch(`${storeModuleName}/updateClient`, this.itemEditingModel)
+      await this.$store.dispatch(`${storeModuleName}/updateClient`, this.lastItemEditingModel)
 
       this.closeItemEditingModal()
     },

@@ -15,6 +15,30 @@
         Создать
       </el-button>
 
+      <el-button
+        v-if="currentSelectedItem"
+        round
+        type="warning"
+        icon="el-icon-edit-outline"
+        @click="openItemEditingModal"
+      >
+        Редактировать
+      </el-button>
+
+      <el-button
+        v-if="currentSelectedItem"
+        round
+        type="danger"
+        icon="el-icon-delete"
+        @click="deleteItem(currentSelectedItem)"
+      >
+        Удалить
+      </el-button>
+
+      <!--
+      Держать "невидимые" элементы модалок последними,
+      чтобы они не разбивали селекторы `.el-button + .el-button`
+      -->
       <el-dialog
         :visible="isItemCreationModalActive"
         :close-on-click-modal="false"
@@ -43,16 +67,6 @@
           </el-button>
         </div>
       </el-dialog>
-
-      <el-button
-        v-if="currentSelectedItem"
-        round
-        type="warning"
-        icon="el-icon-edit-outline"
-        @click="openItemEditingModal"
-      >
-        Редактировать
-      </el-button>
 
       <el-dialog
         v-if="isItemEditingModalActive"
@@ -111,25 +125,6 @@
         resizable
         show-overflow-tooltip
       />
-
-      <!--
-      TODO move actions from a column into an action panel
-      -->
-      <el-table-column
-        fixed="right"
-        label="Действия"
-      >
-        <template slot-scope="scope">
-          <el-button
-            plain
-            type="danger"
-            size="small"
-            @click="deleteItem(items[scope.$index])"
-          >
-            Удалить
-          </el-button>
-        </template>
-      </el-table-column>
     </el-table>
   </div>
 </template>
@@ -333,10 +328,18 @@ export default {
     // --- Deleting ---
 
     async deleteItem (item) {
+      if (!item) {
+        throw new Error('An item must specified to be deleted')
+      }
+
       // TODO confirmation
       // http://element.eleme.io/#/en-US/component/popover#nested-operation
 
       await this.$store.dispatch(`${storeModuleName}/deleteClient`, item)
+
+      this.$router.push({
+        query: omit(this.$store.state.route.query, [QUERY_PARAM_ID, QUERY_PARAM_MODE]),
+      })
     },
   },
 }

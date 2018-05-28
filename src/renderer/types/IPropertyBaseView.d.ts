@@ -19,6 +19,7 @@ export default interface IPropertyBaseView {
 
     // Columns
     minWidth ?: number
+    fixedToSide ?: 'left' | 'right'
 
     // number - controls
     min ?: number

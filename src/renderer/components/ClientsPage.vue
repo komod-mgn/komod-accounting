@@ -4,12 +4,19 @@
       :item-base-properties="itemBaseProperties"
       :item-computed-properties="itemComputedProperties"
       :get-item-creation-template-model="getItemCreationTemplateModel"
+      :get-computed-property-value="getComputedPropertyValue"
       store-module-name="clients"
     />
   </div>
 </template>
 
 <script>
+import {
+  groupBy,
+  mapValues,
+  sortBy,
+  last,
+} from 'lodash-es'
 import { KomodClient, KomodClientStatusEnum } from '@/types/KomodClient'
 import TheTablePageView from '@/components/TheTablePageView'
 
@@ -28,12 +35,14 @@ export default {
         label: 'Фамилия',
         type: 'string',
         minWidth: 100,
+        fixedToSide: 'left',
       },
       {
         name: 'firstName',
         label: 'Имя',
         type: 'string',
         minWidth: 100,
+        fixedToSide: 'left',
       },
       {
         name: 'middleName',
@@ -88,17 +97,39 @@ export default {
         minWidth: 100,
       },
       {
-        name: 'lastTransaction',
+        name: 'lastTransactionDate',
         label: 'Последнее посещение',
         type: 'datetime',
-        minWidth: 100,
+        minWidth: 200,
       },
     ],
   }),
 
+  computed: {
+    transactionsMapByClient () {
+      return groupBy(this.$store.state.transactions.items, 'clientId')
+    },
+    transactionsMapByClientSortedByDate () {
+      return mapValues(
+        this.transactionsMapByClient,
+        transactions => sortBy(transactions, 'date')
+      )
+    },
+  },
+
   methods: {
     getItemCreationTemplateModel () {
       return new KomodClient()
+    },
+
+    getComputedPropertyValue (item, property) {
+      switch (property) {
+        case 'lastTransactionDate':
+          const lastTransaction = last(this.transactionsMapByClientSortedByDate[item.id])
+          return lastTransaction
+            ? lastTransaction.date
+            : undefined
+      }
     },
   },
 }

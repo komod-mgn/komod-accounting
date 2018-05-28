@@ -135,7 +135,7 @@
     <!-- TODO sorting -->
     <!-- TODO `:max-height` for fixed header -->
     <el-table
-      :data="items"
+      :data="itemsWithComputedProperties"
       :row-class-name="getRowClass"
       border
       @row-click="selectItem"
@@ -143,6 +143,7 @@
       <el-table-column
         type="index"
         align="center"
+        fixed="left"
         header-align="center"
       />
 
@@ -151,6 +152,7 @@
         :key="field.name"
         :prop="field.name"
         :label="field.label"
+        :fixed="field.fixedToSide"
         :formatter="field.tableFormatter"
         :min-width="field.minWidth"
         header-align="center"
@@ -182,7 +184,11 @@
 </template>
 
 <script>
-import { concat, omit } from 'lodash-es'
+import {
+  concat,
+  map,
+  omit,
+} from 'lodash-es'
 import {
   QUERY_PARAM_ID,
   QUERY_PARAM_MODE,
@@ -190,6 +196,8 @@ import {
   QUERY_PARAM_MODE_EDIT,
 } from '@/router/table-view-constants'
 import BaseFormWithIntermediateModel from '@/components/BaseFormWithIntermediateModel'
+
+function noop () {}
 
 export default {
   name: 'TheTablePageView',
@@ -221,6 +229,12 @@ export default {
       type: Function,
       required: true,
     },
+
+    getComputedPropertyValue: {
+      type: Function,
+      required: false,
+      default: () => noop,
+    },
   },
 
   data: () => ({
@@ -232,6 +246,20 @@ export default {
   computed: {
     items () {
       return this.$store.state[this.storeModuleName].items
+    },
+    itemsWithComputedProperties () {
+      return map(this.items, item => {
+        const itemShallowClone = { ...item }
+
+        this.itemComputedProperties.forEach(prop => {
+          itemShallowClone[prop.name] = this.getComputedPropertyValue(
+            item,
+            prop.name,
+          )
+        })
+
+        return itemShallowClone
+      })
     },
     itemsMap () {
       return this.$store.getters[`${this.storeModuleName}/itemsMap`]

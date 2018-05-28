@@ -314,6 +314,16 @@ export default {
       return ''
     },
 
+    defaultTableFormatter (row, col, value, fieldView) {
+      switch (fieldView.type) {
+        case 'datetime': return value != null
+          ? (new Date(value)).toLocaleString('ru-RU')
+          : value
+      }
+
+      return value
+    },
+
     /**
      * http://element.eleme.io/#/en-US/component/table#custom-column-template
      *
@@ -323,13 +333,12 @@ export default {
     formatCellText (elUiRowScope, fieldView) {
       const value = elUiRowScope.row[fieldView.name]
 
-      return fieldView.tableFormatter
-        ? fieldView.tableFormatter(
-          elUiRowScope.row,
-          elUiRowScope.column,
-          value,
-        )
-        : value
+      return (fieldView.tableFormatter || this.defaultTableFormatter)(
+        elUiRowScope.row,
+        elUiRowScope.column,
+        value,
+        fieldView,
+      )
     },
 
     // --- Creation ---

@@ -16,6 +16,7 @@ import {
   mapValues,
   sortBy,
   last,
+  sumBy,
 } from 'lodash-es'
 import { KomodClient, KomodClientStatusEnum } from '@/types/KomodClient'
 import TheTablePageView from '@/components/TheTablePageView'
@@ -124,6 +125,9 @@ export default {
 
     getComputedPropertyValue (item, property) {
       switch (property) {
+        case 'itemsAmountTotal':
+          return sumBy(this.transactionsMapByClientSortedByDate[item.id], 'itemsAmount')
+
         case 'lastTransactionDate':
           const lastTransaction = last(this.transactionsMapByClientSortedByDate[item.id])
           return lastTransaction

@@ -1,190 +1,27 @@
 <template>
   <div>
-    <el-card
-      :body-style="{
-        padding: '10px',
-      }"
-      class="action-panel"
-    >
-      <el-button
-        round
-        type="primary"
-        icon="el-icon-plus"
-        class="action-panel__item"
-        @click="openItemCreationModal"
-      >
-        Создать
-      </el-button>
-
-      <el-button
-        v-if="currentSelectedItem"
-        round
-        type="warning"
-        icon="el-icon-edit-outline"
-        class="action-panel__item"
-        @click="openItemEditingModal"
-      >
-        Редактировать
-      </el-button>
-
-      <el-popover
-        v-if="currentSelectedItem"
-        v-model="isDeleteConfirmationVisible"
-        class="action-panel__item"
-      >
-        <el-button
-          slot="reference"
-          round
-          type="danger"
-          icon="el-icon-delete"
-        >
-          Удалить
-        </el-button>
-
-        <p>Вы уверены, что хотите удалить текущий элемент?</p>
-        <div
-          :style="{
-            marginTop: '10px',
-            textAlign: 'right',
-          }"
-        >
-          <el-button
-            plain
-            size="mini"
-            @click="isDeleteConfirmationVisible = false"
-          >
-            Отмена
-          </el-button>
-          <el-button
-            plain
-            type="danger"
-            size="mini"
-            @click="isDeleteConfirmationVisible = false; deleteCurrentItem()"
-          >
-            Удалить
-          </el-button>
-        </div>
-      </el-popover>
-
-      <!--
-      Держать "невидимые" элементы модалок последними,
-      чтобы они не разбивали селекторы `.el-button + .el-button`
-      -->
-      <el-dialog
-        v-if="isItemCreationModalActive"
-        :visible="isItemCreationModalActive"
-        :close-on-click-modal="false"
-        title="Создание"
-        @close="closeItemCreationModal"
-      >
-        <base-form-with-intermediate-model
-          :get-form-data-template="getItemCreationTemplateModel"
-          :form-view="itemFormView"
-          @model-change="handleItemCreationChange"
-        />
-
-        <div slot="footer">
-          <el-button
-            plain
-            type="danger"
-            @click="closeItemCreationModal"
-          >
-            Отмена
-          </el-button>
-          <el-button
-            type="success"
-            @click="submitItemCreationModal"
-          >
-            Сохранить
-          </el-button>
-        </div>
-      </el-dialog>
-
-      <el-dialog
-        v-if="isItemEditingModalActive"
-        :visible="isItemEditingModalActive"
-        :close-on-click-modal="false"
-        title="Редактирование"
-        @close="closeItemEditingModal"
-      >
-        <base-form-with-intermediate-model
-          :get-form-data-template="getItemEditingTemplateModel"
-          :form-view="itemFormView"
-          @model-change="handleItemEditingChange"
-        />
-
-        <div slot="footer">
-          <el-button
-            plain
-            type="danger"
-            @click="closeItemEditingModal"
-          >
-            Отмена
-          </el-button>
-          <el-button
-            type="success"
-            @click="submitItemEditingModal"
-          >
-            Сохранить
-          </el-button>
-        </div>
-      </el-dialog>
-    </el-card>
-
-    <!-- TODO pagination -->
-    <!-- TODO sorting -->
-    <!-- TODO `:max-height` for fixed header -->
-    <el-table
-      :data="items"
-      :row-class-name="getRowClass"
-      border
-      @row-click="selectItem"
-    >
-      <el-table-column
-        type="index"
-        align="center"
-        header-align="center"
-      />
-
-      <el-table-column
-        v-for="field in tableProperties"
-        :key="field.name"
-        :prop="field.name"
-        :label="field.label"
-        :formatter="field.tableFormatter"
-        :min-width="field.minWidth"
-        header-align="center"
-        resizable
-        show-overflow-tooltip
-      />
-    </el-table>
+    <the-table-page-view
+      :item-base-properties="itemBaseProperties"
+      :item-computed-properties="itemComputedProperties"
+      :get-item-creation-template-model="getItemCreationTemplateModel"
+      store-module-name="clients"
+    />
   </div>
 </template>
 
 <script>
-import { concat, omit } from 'lodash-es'
-import { mapState, mapGetters } from 'vuex'
-import {
-  QUERY_PARAM_ID,
-  QUERY_PARAM_MODE,
-  QUERY_PARAM_MODE_CREATE,
-  QUERY_PARAM_MODE_EDIT,
-} from '@/router/table-view-constants'
 import { KomodClient, KomodClientStatusEnum } from '@/types/KomodClient'
-import BaseForm from '@/components/BaseForm'
-import BaseFormWithIntermediateModel from '@/components/BaseFormWithIntermediateModel'
-
-const storeModuleName = 'clients'
+import TheTablePageView from '@/components/TheTablePageView'
 
 export default {
   name: 'ClientsPage',
 
   components: {
-    BaseForm,
-    BaseFormWithIntermediateModel,
+    TheTablePageView,
   },
 
   data: () => ({
+    /** @type {Array<IPropertyBaseView>} */
     itemBaseProperties: [
       {
         name: 'lastName',
@@ -236,6 +73,7 @@ export default {
       },
     ],
 
+    /** @type {Array<IPropertyBaseView>} */
     itemComputedProperties: [
       {
         name: 'itemsAmountCurrentSeason',
@@ -256,139 +94,11 @@ export default {
         minWidth: 100,
       },
     ],
-
-    lastItemCreationModel: null,
-    lastItemEditingModel: null,
-    isDeleteConfirmationVisible: false,
   }),
 
-  computed: {
-    ...mapState({
-      items: state => state[storeModuleName].items,
-    }),
-    ...mapGetters({
-      itemsMap: `${storeModuleName}/itemsMap`,
-    }),
-
-    currentSelectedItem () {
-      return this.itemsMap[this.$store.state.route.query[QUERY_PARAM_ID]] || null
-    },
-
-    tableProperties () {
-      return concat(this.itemBaseProperties, this.itemComputedProperties)
-    },
-
-    itemFormView () {
-      return {
-        fields: this.itemBaseProperties,
-      }
-    },
-
-    isItemCreationModalActive () {
-      return (
-        this.$store.state.route.query[QUERY_PARAM_MODE] === QUERY_PARAM_MODE_CREATE
-      )
-    },
-
-    isItemEditingModalActive () {
-      return (
-        this.currentSelectedItem &&
-        this.$store.state.route.query[QUERY_PARAM_MODE] === QUERY_PARAM_MODE_EDIT
-      )
-    },
-  },
-
   methods: {
-    selectItem (newSelectedItem) {
-      this.$router.push({
-        query: {
-          ...omit(this.$store.state.route.query, QUERY_PARAM_MODE),
-          [QUERY_PARAM_ID]: newSelectedItem.id,
-        },
-      })
-    },
-
-    getRowClass ({ row, rowIndex }) {
-      if (
-        this.currentSelectedItem &&
-        this.currentSelectedItem.id === row.id
-      ) {
-        return '--selected-row'
-      }
-
-      return ''
-    },
-
-    // --- Creation ---
-
     getItemCreationTemplateModel () {
       return new KomodClient()
-    },
-    openItemCreationModal () {
-      this.$router.push({
-        query: {
-          ...this.$store.state.route.query,
-          [QUERY_PARAM_MODE]: QUERY_PARAM_MODE_CREATE,
-        },
-      })
-    },
-    closeItemCreationModal () {
-      this.$router.push({
-        query: omit(this.$store.state.route.query, QUERY_PARAM_MODE),
-      })
-    },
-    handleItemCreationChange (newItem) {
-      this.lastItemCreationModel = newItem
-    },
-    async submitItemCreationModal () {
-      await this.$store.dispatch(`${storeModuleName}/updateClient`, this.lastItemCreationModel)
-
-      this.closeItemCreationModal()
-    },
-
-    // --- Editing ---
-
-    getItemEditingTemplateModel () {
-      return this.currentSelectedItem
-    },
-    openItemEditingModal () {
-      if (!this.currentSelectedItem) {
-        throw new Error('An item must be selected to be edited')
-      }
-
-      this.$router.push({
-        query: {
-          ...this.$store.state.route.query,
-          [QUERY_PARAM_MODE]: QUERY_PARAM_MODE_EDIT,
-        },
-      })
-    },
-    closeItemEditingModal () {
-      this.$router.push({
-        query: omit(this.$store.state.route.query, QUERY_PARAM_MODE),
-      })
-    },
-    handleItemEditingChange (newItem) {
-      this.lastItemEditingModel = newItem
-    },
-    async submitItemEditingModal () {
-      await this.$store.dispatch(`${storeModuleName}/updateClient`, this.lastItemEditingModel)
-
-      this.closeItemEditingModal()
-    },
-
-    // --- Deleting ---
-
-    async deleteCurrentItem () {
-      if (!this.currentSelectedItem) {
-        throw new Error('An item must be selected to be deleted')
-      }
-
-      await this.$store.dispatch(`${storeModuleName}/deleteClient`, this.currentSelectedItem)
-
-      this.$router.push({
-        query: omit(this.$store.state.route.query, [QUERY_PARAM_ID, QUERY_PARAM_MODE]),
-      })
     },
   },
 }

@@ -1,135 +1,35 @@
 <template>
   <div>
-    <el-button
-      round
-      type="primary"
-      icon="el-icon-plus"
-      @click="openTransactionCreationModal"
-    >
-      Создать
-    </el-button>
-
-    <el-dialog
-      :visible="isTransactionCreationModalActive"
-      :close-on-click-modal="false"
-      title="Создание транзакции"
-      @close="closeTransactionCreationModal"
-    >
-      <base-form
-        :form-data="transactionCreationModel"
-        :form-view="transactionFormView"
-        @input="({name, value}) => transactionCreationModel[name] = value"
-      />
-
-      <div slot="footer">
-        <el-button
-          plain
-          type="danger"
-          @click="closeTransactionCreationModal"
-        >
-          Отмена
-        </el-button>
-        <el-button
-          type="success"
-          @click="submitTransactionCreationModal"
-        >
-          Создать
-        </el-button>
-      </div>
-    </el-dialog>
-
-    <!-- TODO pagination -->
-    <!-- TODO sorting -->
-    <!-- TODO `:max-height` for fixed header -->
-    <el-table
-      :data="transactions"
-      border
-    >
-      <el-table-column
-        type="index"
-      />
-
-      <el-table-column
-        v-for="field in transactionBaseFields"
-        :key="field.name"
-        :prop="field.name"
-        :label="field.label"
-        :formatter="field.tableFormatter"
-      >
-        <template slot-scope="scope">
-          <!-- refs to hrefs -->
-          <router-link
-            v-if="field.type === 'ref' && field.hrefModuleName"
-            :to="{
-              path: field.hrefModuleName,
-              query: {
-                [field.hrefQueryIdParam]: scope.row[field.name],
-              },
-            }"
-            v-text="field.tableFormatter(scope.row, scope.column, scope.row[field.name])"
-          />
-
-          <!-- Default formatting -->
-          <template
-            v-else
-          >{{ (
-            field.tableFormatter
-              ? field.tableFormatter(scope.row, scope.column, scope.row[field.name])
-              : scope.row[field.name]
-          ) }}</template>
-        </template>
-      </el-table-column>
-
-      <!--
-      TODO `highlight-current-row` for table and
-      move actions from a column into an action panel
-      -->
-      <el-table-column
-        fixed="right"
-        label="Действия"
-      >
-        <template slot-scope="scope">
-          <el-button
-            plain
-            type="danger"
-            size="small"
-            @click="deleteTransaction(transactions[scope.$index])"
-          >
-            Удалить
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <the-table-page-view
+      :item-base-properties="itemBaseProperties"
+      :get-item-creation-template-model="getItemCreationTemplateModel"
+      store-module-name="transactions"
+    />
   </div>
 </template>
 
 <script>
-import { mapState, mapGetters } from 'vuex'
+import { mapGetters } from 'vuex'
 import {
   QUERY_PARAM_ID,
-  // QUERY_PARAM_MODE,
-  // QUERY_PARAM_MODE_CREATE,
-  // QUERY_PARAM_MODE_EDIT,
 } from '@/router/table-view-constants'
 import { KomodTransaction } from '@/types/KomodTransaction'
 import { stringifyKomodClient } from '@/types/KomodClient'
-import BaseForm from '@/components/BaseForm'
+import TheTablePageView from '@/components/TheTablePageView'
 
 export default {
   name: 'TransactionsPage',
 
   components: {
-    BaseForm,
+    TheTablePageView,
   },
 
   data () {
     const self = this
 
     return {
-      isTransactionCreationModalActive: false,
-      transactionCreationModel: new KomodTransaction(),
-      // TODO
-      transactionBaseFields: [
+      /** @type {Array<IPropertyBaseView>} */
+      itemBaseProperties: [
         {
           name: 'date',
           label: 'Дата',
@@ -161,40 +61,14 @@ export default {
   },
 
   computed: {
-    ...mapState({
-      transactions: state => state.transactions.items,
-    }),
     ...mapGetters({
       clientsMap: 'clients/itemsMap',
     }),
-
-    transactionFormView () {
-      return {
-        fields: this.transactionBaseFields,
-      }
-    },
   },
 
   methods: {
-    openTransactionCreationModal () {
-      this.transactionCreationModel.date = (new Date()).toISOString()
-
-      this.isTransactionCreationModalActive = true
-    },
-    closeTransactionCreationModal () {
-      // reset value
-      this.transactionCreationModel = new KomodTransaction()
-      this.isTransactionCreationModalActive = false
-    },
-    async submitTransactionCreationModal () {
-      await this.$store.dispatch('transactions/updateTransaction', this.transactionCreationModel)
-
-      this.closeTransactionCreationModal()
-    },
-    async deleteTransaction (transaction) {
-      // TODO confirmation
-
-      await this.$store.dispatch('transactions/deleteTransaction', transaction)
+    getItemCreationTemplateModel () {
+      return new KomodTransaction()
     },
   },
 }

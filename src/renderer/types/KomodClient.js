@@ -17,6 +17,7 @@ export const KomodClientStatusEnum = {
 
 export class KomodClient {
   constructor () {
+    /** @type {string | null} */
     this.id = null
     this.lastName = ''
     this.firstName = ''

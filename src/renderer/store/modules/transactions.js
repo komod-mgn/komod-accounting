@@ -1,4 +1,5 @@
 import nanoid from 'nanoid'
+import { keyBy } from 'lodash-es'
 
 import { updateVuexState } from '@/utils'
 import { dbUpdate } from '@/db'
@@ -10,6 +11,16 @@ export default {
   state: {
     /** @type {Array<KomodTransaction>} */
     items: [],
+  },
+
+  getters: {
+    /**
+     * @param {Object} state
+     * @return {Object<string, KomodTransaction>}
+     */
+    itemsMap (state) {
+      return keyBy(state.items, 'id')
+    },
   },
 
   mutations: {
@@ -44,7 +55,7 @@ export default {
   },
 
   actions: {
-    async updateTransaction ({ state, commit }, item) {
+    async updateItem ({ state, commit }, item) {
       if (item.id == null) {
         commit('ADD', {
           ...item,
@@ -58,7 +69,7 @@ export default {
       await dbUpdate('transactions', state)
     },
 
-    async deleteTransaction ({ state, commit }, item) {
+    async deleteItem ({ state, commit }, item) {
       commit('DELETE', item)
 
       // sync db

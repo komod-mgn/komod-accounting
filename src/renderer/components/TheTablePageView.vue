@@ -68,7 +68,7 @@
 
       <!--
       Держать "невидимые" элементы модалок последними,
-      чтобы они не разбивали селекторы `.el-button + .el-button`
+      чтобы они не разбивали селекторы последовательности видимых элементов
       -->
       <el-dialog
         v-if="isItemCreationModalActive"
@@ -156,119 +156,86 @@
         header-align="center"
         resizable
         show-overflow-tooltip
-      />
+      >
+        <template slot-scope="scope">
+          <!-- refs to hrefs -->
+          <router-link
+            v-if="field.type === 'ref' && field.hrefModuleName"
+            :to="{
+              path: field.hrefModuleName,
+              query: {
+                [field.hrefQueryIdParam]: scope.row[field.name],
+              },
+            }"
+            @click.native.stop
+            v-text="formatCellText(scope, field)"
+          />
+
+          <!-- Default formatting -->
+          <template
+            v-else
+          >{{ formatCellText(scope, field) }}</template>
+        </template>
+      </el-table-column>
     </el-table>
   </div>
 </template>
 
 <script>
 import { concat, omit } from 'lodash-es'
-import { mapState, mapGetters } from 'vuex'
 import {
   QUERY_PARAM_ID,
   QUERY_PARAM_MODE,
   QUERY_PARAM_MODE_CREATE,
   QUERY_PARAM_MODE_EDIT,
 } from '@/router/table-view-constants'
-import { KomodClient, KomodClientStatusEnum } from '@/types/KomodClient'
-import BaseForm from '@/components/BaseForm'
 import BaseFormWithIntermediateModel from '@/components/BaseFormWithIntermediateModel'
 
-const storeModuleName = 'clients'
-
 export default {
-  name: 'ClientsPage',
+  name: 'TheTablePageView',
 
   components: {
-    BaseForm,
     BaseFormWithIntermediateModel,
   },
 
+  props: {
+    /** @type {Array<IPropertyBaseView>} */
+    itemBaseProperties: {
+      type: Array,
+      required: true,
+    },
+
+    /** @type {Array<IPropertyBaseView>} */
+    itemComputedProperties: {
+      type: Array,
+      required: false,
+      default: () => [],
+    },
+
+    storeModuleName: {
+      type: String,
+      required: true,
+    },
+
+    getItemCreationTemplateModel: {
+      type: Function,
+      required: true,
+    },
+  },
+
   data: () => ({
-    itemBaseProperties: [
-      {
-        name: 'lastName',
-        label: 'Фамилия',
-        type: 'string',
-        minWidth: 100,
-      },
-      {
-        name: 'firstName',
-        label: 'Имя',
-        type: 'string',
-        minWidth: 100,
-      },
-      {
-        name: 'middleName',
-        label: 'Отчество',
-        type: 'string',
-        minWidth: 100,
-      },
-      {
-        name: 'status',
-        label: 'Статус',
-        type: 'enum',
-        minWidth: 150,
-        multiple: true,
-        optionsMap: KomodClientStatusEnum,
-        tableFormatter: (row, col, vals) => vals
-          .map(val => KomodClientStatusEnum[val])
-          .join(', '),
-      },
-      {
-        name: 'idDocument',
-        label: 'Удостоверение №',
-        type: 'string',
-        minWidth: 150,
-      },
-      {
-        name: 'phoneNumber',
-        label: 'Телефон',
-        type: 'string',
-        minWidth: 100,
-      },
-      {
-        name: 'seasonItemsLimit',
-        label: 'Норма на сезон',
-        type: 'number',
-        minWidth: 90,
-        min: 0,
-      },
-    ],
-
-    itemComputedProperties: [
-      {
-        name: 'itemsAmountCurrentSeason',
-        label: 'Кол-во взятых вещей (сезон)',
-        type: 'number',
-        minWidth: 100,
-      },
-      {
-        name: 'itemsAmountTotal',
-        label: 'Кол-во взятых вещей (всего)',
-        type: 'number',
-        minWidth: 100,
-      },
-      {
-        name: 'lastTransaction',
-        label: 'Последнее посещение',
-        type: 'datetime',
-        minWidth: 100,
-      },
-    ],
-
     lastItemCreationModel: null,
     lastItemEditingModel: null,
     isDeleteConfirmationVisible: false,
   }),
 
   computed: {
-    ...mapState({
-      items: state => state[storeModuleName].items,
-    }),
-    ...mapGetters({
-      itemsMap: `${storeModuleName}/itemsMap`,
-    }),
+    items () {
+      return this.$store.state[this.storeModuleName].items
+    },
+    itemsMap () {
+      return this.$store.getters[`${this.storeModuleName}/itemsMap`]
+    },
 
     currentSelectedItem () {
       return this.itemsMap[this.$store.state.route.query[QUERY_PARAM_ID]] || null
@@ -319,11 +286,26 @@ export default {
       return ''
     },
 
+    /**
+     * http://element.eleme.io/#/en-US/component/table#custom-column-template
+     *
+     * @param {{ row: Object, column: Object }} elUiRowScope
+     * @param {IPropertyBaseView} fieldView
+     */
+    formatCellText (elUiRowScope, fieldView) {
+      const value = elUiRowScope.row[fieldView.name]
+
+      return fieldView.tableFormatter
+        ? fieldView.tableFormatter(
+          elUiRowScope.row,
+          elUiRowScope.column,
+          value,
+        )
+        : value
+    },
+
     // --- Creation ---
 
-    getItemCreationTemplateModel () {
-      return new KomodClient()
-    },
     openItemCreationModal () {
       this.$router.push({
         query: {
@@ -341,7 +323,7 @@ export default {
       this.lastItemCreationModel = newItem
     },
     async submitItemCreationModal () {
-      await this.$store.dispatch(`${storeModuleName}/updateClient`, this.lastItemCreationModel)
+      await this.$store.dispatch(`${this.storeModuleName}/updateItem`, this.lastItemCreationModel)
 
       this.closeItemCreationModal()
     },
@@ -372,7 +354,7 @@ export default {
       this.lastItemEditingModel = newItem
     },
     async submitItemEditingModal () {
-      await this.$store.dispatch(`${storeModuleName}/updateClient`, this.lastItemEditingModel)
+      await this.$store.dispatch(`${this.storeModuleName}/updateItem`, this.lastItemEditingModel)
 
       this.closeItemEditingModal()
     },
@@ -384,7 +366,7 @@ export default {
         throw new Error('An item must be selected to be deleted')
       }
 
-      await this.$store.dispatch(`${storeModuleName}/deleteClient`, this.currentSelectedItem)
+      await this.$store.dispatch(`${this.storeModuleName}/deleteItem`, this.currentSelectedItem)
 
       this.$router.push({
         query: omit(this.$store.state.route.query, [QUERY_PARAM_ID, QUERY_PARAM_MODE]),

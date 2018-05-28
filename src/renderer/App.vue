@@ -96,6 +96,10 @@ export default {
     font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
   }
 
+  a {
+    color: royalblue;
+  }
+
   #app {
     display: flex;
     flex-direction: column;

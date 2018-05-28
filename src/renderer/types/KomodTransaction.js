@@ -1,5 +1,6 @@
 export class KomodTransaction {
   constructor () {
+    /** @type {string | null} */
     this.id = null
     /**
      * Например, '2018-05-23T17:30:06.984Z' (`Date.toISOString()`),

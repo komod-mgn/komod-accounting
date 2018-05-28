@@ -55,7 +55,7 @@ export default {
   },
 
   actions: {
-    async updateClient ({ state, commit }, item) {
+    async updateItem ({ state, commit }, item) {
       if (item.id == null) {
         commit('ADD', {
           ...item,
@@ -69,7 +69,7 @@ export default {
       await dbUpdate('clients', state)
     },
 
-    async deleteClient ({ state, commit }, item) {
+    async deleteItem ({ state, commit }, item) {
       commit('DELETE', item)
 
       // sync db

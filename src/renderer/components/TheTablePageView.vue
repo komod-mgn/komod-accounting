@@ -136,6 +136,7 @@
     <!-- TODO `:max-height` for fixed header -->
     <el-table
       :data="itemsWithComputedProperties"
+      :row-key="'id'"
       :row-class-name="getRowClass"
       border
       @row-click="selectItem"
@@ -198,6 +199,10 @@ import {
 import BaseFormWithIntermediateModel from '@/components/BaseFormWithIntermediateModel'
 
 function noop () {}
+
+function getIdClass (id) {
+  return `id--${id}`
+}
 
 export default {
   name: 'TheTablePageView',
@@ -293,6 +298,30 @@ export default {
     },
   },
 
+  watch: {
+    currentSelectedItem: {
+      immediate: true,
+      handler (newVal) {
+        // Watcher is first called before component is rendered,
+        // so have to wait until the row element exists and
+        // row is not yet de-selected
+        this.$nextTick(() => {
+          if (newVal) {
+            const rowEl = document.getElementsByClassName(getIdClass(newVal.id))[0]
+            if (rowEl) {
+              rowEl.scrollIntoView({
+                // vertically in ancestor context
+                block: 'center',
+                // horizontally in ancestor context
+                inline: 'start',
+              })
+            }
+          }
+        })
+      },
+    },
+  },
+
   methods: {
     selectItem (newSelectedItem) {
       this.$router.push({
@@ -304,14 +333,18 @@ export default {
     },
 
     getRowClass ({ row, rowIndex }) {
+      // Добавляем id в класс стоки для поиска
+      // её DOM-элемента по модели данных
+      const classNames = [getIdClass(row.id)]
+
       if (
         this.currentSelectedItem &&
         this.currentSelectedItem.id === row.id
       ) {
-        return '--selected-row'
+        classNames.push('--selected-row')
       }
 
-      return ''
+      return classNames.join('  ')
     },
 
     defaultTableFormatter (row, col, value, fieldView) {

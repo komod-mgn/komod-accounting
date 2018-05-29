@@ -14,8 +14,7 @@
 import {
   groupBy,
   mapValues,
-  sortBy,
-  last,
+  orderBy,
   sumBy,
 } from 'lodash-es'
 import { KomodClient, KomodClientStatusEnum } from '@/types/KomodClient'
@@ -107,13 +106,15 @@ export default {
   }),
 
   computed: {
-    transactionsMapByClient () {
-      return groupBy(this.$store.state.transactions.items, 'clientId')
-    },
-    transactionsMapByClientSortedByDate () {
+    transactionsMapByClientSortedByDateDesc () {
+      const transactionsMapByClient = groupBy(
+        this.$store.state.transactions.items,
+        'clientId',
+      )
+
       return mapValues(
-        this.transactionsMapByClient,
-        transactions => sortBy(transactions, 'date')
+        transactionsMapByClient,
+        transactions => orderBy(transactions, ['date'], ['desc'])
       )
     },
   },
@@ -126,10 +127,11 @@ export default {
     getComputedPropertyValue (item, property) {
       switch (property) {
         case 'itemsAmountTotal':
-          return sumBy(this.transactionsMapByClientSortedByDate[item.id], 'itemsAmount')
+          return sumBy(this.transactionsMapByClientSortedByDateDesc[item.id], 'itemsAmount')
 
         case 'lastTransactionDate':
-          const lastTransaction = last(this.transactionsMapByClientSortedByDate[item.id])
+          const clientTransactions = this.transactionsMapByClientSortedByDateDesc[item.id]
+          const lastTransaction = clientTransactions ? clientTransactions[0] : null
           return lastTransaction
             ? lastTransaction.date
             : undefined

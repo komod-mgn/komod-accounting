@@ -20,6 +20,35 @@ import {
 import { KomodClient, KomodClientStatusEnum } from '@/types/KomodClient'
 import TheTablePageView from '@/components/TheTablePageView'
 
+/**
+ * @param {Date} date
+ * @return {Date}
+ */
+function getSeasonStartDateByDate (date) {
+  const year = date.getFullYear()
+  const month = date.getMonth()
+
+  const SEASON_LENGTH = 3
+  const SPRING_START = 2 // March in zero-based
+  const SUMMER_START = SPRING_START + SEASON_LENGTH
+  const AUTUMN_START = SUMMER_START + SEASON_LENGTH
+  const WINTER_START = AUTUMN_START + SEASON_LENGTH
+
+  if (month < SPRING_START) {
+    return new Date(year - 1, WINTER_START)
+  } else if (month < SUMMER_START) {
+    return new Date(year, SPRING_START)
+  } else if (month < AUTUMN_START) {
+    return new Date(year, SUMMER_START)
+  } else if (month < WINTER_START) {
+    return new Date(year, AUTUMN_START)
+  } else {
+    return new Date(year, WINTER_START)
+  }
+}
+
+const currentSeasonStartDateISO = getSeasonStartDateByDate(new Date()).toISOString()
+
 export default {
   name: 'ClientsPage',
 
@@ -117,6 +146,28 @@ export default {
         transactions => orderBy(transactions, ['date'], ['desc'])
       )
     },
+
+    currentSeasonItemsAmountByClient () {
+      return mapValues(
+        this.transactionsMapByClientSortedByDateDesc,
+        transactions => {
+          let sum = 0
+
+          for (const transaction of transactions) {
+            // Transactions are sorted from recent to old,
+            // and once a transaction is older than season start,
+            // it is and all the next are irrelevant
+            if (transaction.date < currentSeasonStartDateISO) {
+              break
+            }
+
+            sum += transaction.itemsAmount
+          }
+
+          return sum
+        }
+      )
+    },
   },
 
   methods: {
@@ -126,6 +177,9 @@ export default {
 
     getComputedPropertyValue (item, property) {
       switch (property) {
+        case 'itemsAmountCurrentSeason':
+          return this.currentSeasonItemsAmountByClient[item.id] || 0
+
         case 'itemsAmountTotal':
           return sumBy(this.transactionsMapByClientSortedByDateDesc[item.id], 'itemsAmount')
 

@@ -7,7 +7,7 @@ export class KomodTransaction {
      * чтобы сразу было (де-)сериалезуемо
      * @type {string}
      */
-    this.date = ''
+    this.date = (new Date()).toISOString()
     this.clientId = ''
     this.itemsAmount = 0
   }

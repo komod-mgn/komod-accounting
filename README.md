@@ -13,14 +13,22 @@ npm run dev
 
 # build electron application for production
 npm run build
+```
 
+Building a Windows package on Linux:
+
+https://www.electron.build/multi-platform-build#to-build-app-for-windows-on-linux
+
+In short: Install Wine or docker image
+
+#### Other commands
+
+``` bash
 # run end-to-end tests
 npm test
 
-
 # lint all JS/Vue component files in `src/`
 npm run lint
-
 ```
 
 ---

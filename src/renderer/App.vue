@@ -1,6 +1,12 @@
 <template>
-  <div id="app">
-    <el-header id="app__header">
+  <div
+    v-loading="isLoading"
+    id="app"
+  >
+    <el-header
+      v-if="!isLoading && !lastError"
+      id="app__header"
+    >
       <el-menu
         :default-active="currentRouterPath"
         router
@@ -56,16 +62,34 @@
     </el-header>
 
     <el-main>
-      <router-view/>
+      <router-view
+        v-if="!isLoading && !lastError"
+      />
+
+      <el-alert
+        v-if="lastError"
+        :closable="false"
+        :description="lastError.stack"
+        title="Произошла ошибка!"
+        type="error"
+        show-icon
+      />
     </el-main>
   </div>
 </template>
 
 <script>
+import { dbGet } from './db'
+
 export default {
   name: 'KomodAccounting',
+
   data: () => ({
+    isLoading: true,
+    /** @type {Error} */
+    lastError: null,
   }),
+
   computed: {
     currentRouterPath () {
       return this.$store.state.route.path
@@ -74,6 +98,21 @@ export default {
       return process.env.NODE_ENV !== 'production'
     },
   },
+
+  async created () {
+    this.isLoading = true
+
+    // init vuex state from db
+    try {
+      this.$store.commit('clients/UPDATE_STATE', await dbGet('clients'))
+      this.$store.commit('transactions/UPDATE_STATE', await dbGet('transactions'))
+    } catch (error) {
+      this.lastError = error
+    } finally {
+      this.isLoading = false
+    }
+  },
+
   methods: {
     goBack () {
       this.$router.go(-1)
@@ -139,6 +178,10 @@ export default {
   }
 
   /* Global ElementUI overrides */
+  .el-alert .el-alert__description {
+    white-space: pre-wrap;
+  }
+
   .el-select,
   .el-date-editor.el-input
   {

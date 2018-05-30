@@ -2,10 +2,10 @@ import lowdb from 'lowdb'
 import LowdbFileSync from 'lowdb/adapters/FileSync'
 import fse from 'fs-extra'
 
-import {
-  prepare as gitPrepare,
-  commit as gitCommit,
-} from './git'
+// import {
+//   prepare as gitPrepare,
+//   commit as gitCommit,
+// } from './git'
 
 const path = require('path')
 const os = require('os')
@@ -26,7 +26,7 @@ const whenDbReady = (async function prepareDb () {
   db.defaults({})
     .write()
 
-  await gitPrepare(APP_DIR_PATH)
+  // await gitPrepare(APP_DIR_PATH)
 })()
 
 export async function dbGet (field) {
@@ -42,5 +42,5 @@ export async function dbUpdate (field, value) {
   db.set(field, value)
     .write()
 
-  await gitCommit()
+  // await gitCommit()
 }

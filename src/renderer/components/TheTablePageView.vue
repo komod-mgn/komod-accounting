@@ -1,5 +1,7 @@
 <template>
-  <div>
+  <div
+    v-loading="isAsyncOpInProgress"
+  >
     <el-card
       :body-style="{
         padding: '10px',
@@ -71,6 +73,7 @@
       чтобы они не разбивали селекторы последовательности видимых элементов
       -->
       <el-dialog
+        v-loading="isAsyncOpInProgress"
         v-if="isItemCreationModalActive"
         :visible="isItemCreationModalActive"
         :close-on-click-modal="false"
@@ -101,6 +104,7 @@
       </el-dialog>
 
       <el-dialog
+        v-loading="isAsyncOpInProgress"
         v-if="isItemEditingModalActive"
         :visible="isItemEditingModalActive"
         :close-on-click-modal="false"
@@ -246,6 +250,7 @@ export default {
     lastItemCreationModel: null,
     lastItemEditingModel: null,
     isDeleteConfirmationVisible: false,
+    isAsyncOpInProgress: false,
   }),
 
   computed: {
@@ -393,9 +398,13 @@ export default {
       this.lastItemCreationModel = newItem
     },
     async submitItemCreationModal () {
+      this.isAsyncOpInProgress = true
+
       await this.$store.dispatch(`${this.storeModuleName}/updateItem`, this.lastItemCreationModel)
 
       this.closeItemCreationModal()
+
+      this.isAsyncOpInProgress = false
     },
 
     // --- Editing ---
@@ -424,9 +433,13 @@ export default {
       this.lastItemEditingModel = newItem
     },
     async submitItemEditingModal () {
+      this.isAsyncOpInProgress = true
+
       await this.$store.dispatch(`${this.storeModuleName}/updateItem`, this.lastItemEditingModel)
 
       this.closeItemEditingModal()
+
+      this.isAsyncOpInProgress = false
     },
 
     // --- Deleting ---
@@ -436,11 +449,15 @@ export default {
         throw new Error('An item must be selected to be deleted')
       }
 
+      this.isAsyncOpInProgress = true
+
       await this.$store.dispatch(`${this.storeModuleName}/deleteItem`, this.currentSelectedItem)
 
       this.$router.push({
         query: omit(this.$store.state.route.query, [QUERY_PARAM_ID, QUERY_PARAM_MODE]),
       })
+
+      this.isAsyncOpInProgress = false
     },
   },
 }

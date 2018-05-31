@@ -1,5 +1,5 @@
 import lowdb from 'lowdb'
-import LowdbFileSync from 'lowdb/adapters/FileSync'
+import LowdbFileAsync from 'lowdb/adapters/FileAsync'
 import fse from 'fs-extra'
 
 // import {
@@ -17,18 +17,24 @@ const APP_DB_PATH = path.join(APP_DIR_PATH, APP_DB_NAME)
 
 let db
 
+/**
+ * @type {Promise<void>}
+ */
 const whenDbReady = (async function prepareDb () {
   await fse.ensureDir(APP_DIR_PATH)
 
-  // TODO make file ops async?
-  db = lowdb(new LowdbFileSync(APP_DB_PATH))
+  db = await lowdb(new LowdbFileAsync(APP_DB_PATH))
 
-  db.defaults({})
+  await db.defaults({})
     .write()
 
   // await gitPrepare(APP_DIR_PATH)
 })()
 
+/**
+ * @param {string} field
+ * @return {Promise<*>}
+ */
 export async function dbGet (field) {
   await whenDbReady
 
@@ -36,10 +42,15 @@ export async function dbGet (field) {
     .value()
 }
 
+/**
+ * @param {string} field
+ * @param {*} value
+ * @return {Promise<void>}
+ */
 export async function dbUpdate (field, value) {
   await whenDbReady
 
-  db.set(field, value)
+  await db.set(field, value)
     .write()
 
   // await gitCommit()

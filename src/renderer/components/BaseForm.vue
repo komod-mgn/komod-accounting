@@ -67,6 +67,11 @@
       />
 
     </el-form-item>
+
+    <slot
+      :model="formData"
+      name="form-addon"
+    />
   </el-form>
 </template>
 
@@ -102,10 +107,13 @@ export default {
 
   methods: {
     changeField (fieldName, value) {
-      this.$emit('input', {
-        name: fieldName,
-        value,
-      })
+      // Only emit on actual changes
+      if (this.formData[fieldName] !== value) {
+        this.$emit('input', {
+          name: fieldName,
+          value,
+        })
+      }
     },
 
     /**

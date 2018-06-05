@@ -80,11 +80,21 @@
         title="Создание"
         @close="closeItemCreationModal"
       >
-        <base-form-with-intermediate-model
+        <base-form-with-intermediate-model-and-events
           :get-form-data-template="getItemCreationTemplateModel"
-          :form-view="itemFormView"
+          :form-view="itemCreationFormView"
           @model-change="handleItemCreationChange"
-        />
+        >
+          <template
+            slot="form-addon"
+            slot-scope="{ model }"
+          >
+            <slot
+              :model="model"
+              name="creation-form-addon"
+            />
+          </template>
+        </base-form-with-intermediate-model-and-events>
 
         <div slot="footer">
           <el-button
@@ -111,11 +121,21 @@
         title="Редактирование"
         @close="closeItemEditingModal"
       >
-        <base-form-with-intermediate-model
+        <base-form-with-intermediate-model-and-events
           :get-form-data-template="getItemEditingTemplateModel"
-          :form-view="itemFormView"
+          :form-view="itemEditingFormView"
           @model-change="handleItemEditingChange"
-        />
+        >
+          <template
+            slot="form-addon"
+            slot-scope="{ model }"
+          >
+            <slot
+              :model="model"
+              name="editing-form-addon"
+            />
+          </template>
+        </base-form-with-intermediate-model-and-events>
 
         <div slot="footer">
           <el-button
@@ -139,7 +159,7 @@
     <!-- TODO sorting -->
     <!-- TODO `:max-height` for fixed header -->
     <el-table
-      :data="itemsWithComputedProperties"
+      :data="itemsWithComputedTableProps"
       :row-key="'id'"
       :row-class-name="getRowClass"
       border
@@ -158,13 +178,13 @@
         :prop="field.name"
         :label="field.label"
         :fixed="field.fixedToSide"
-        :formatter="field.tableFormatter"
         :min-width="field.minWidth"
         header-align="center"
         resizable
         show-overflow-tooltip
       >
         <template slot-scope="scope">
+
           <!-- refs to hrefs -->
           <router-link
             v-if="field.type === 'ref' && field.hrefModuleName"
@@ -181,7 +201,10 @@
           <!-- Default formatting -->
           <template
             v-else
-          >{{ formatCellText(scope, field) }}</template>
+          >{{
+            formatCellText(scope, field)
+          }}</template>
+
         </template>
       </el-table-column>
     </el-table>
@@ -200,7 +223,7 @@ import {
   QUERY_PARAM_MODE_CREATE,
   QUERY_PARAM_MODE_EDIT,
 } from '@/router/table-view-constants'
-import BaseFormWithIntermediateModel from '@/components/BaseFormWithIntermediateModel'
+import BaseFormWithIntermediateModelAndEvents from '@/components/BaseFormWithIntermediateModelAndEvents'
 
 function noop () {}
 
@@ -212,7 +235,7 @@ export default {
   name: 'TheTablePageView',
 
   components: {
-    BaseFormWithIntermediateModel,
+    BaseFormWithIntermediateModelAndEvents,
   },
 
   props: {
@@ -223,7 +246,7 @@ export default {
     },
 
     /** @type {Array<IPropertyBaseView>} */
-    itemComputedProperties: {
+    itemComputedTableProperties: {
       type: Array,
       required: false,
       default: () => [],
@@ -257,19 +280,11 @@ export default {
     items () {
       return this.$store.state[this.storeModuleName].items
     },
-    itemsWithComputedProperties () {
-      return map(this.items, item => {
-        const itemShallowClone = { ...item }
-
-        this.itemComputedProperties.forEach(prop => {
-          itemShallowClone[prop.name] = this.getComputedPropertyValue(
-            item,
-            prop.name,
-          )
-        })
-
-        return itemShallowClone
-      })
+    itemsWithComputedTableProps () {
+      return map(
+        this.items,
+        item => this.getCloneWithComputedProps(item, this.itemComputedTableProperties),
+      )
     },
     itemsMap () {
       return this.$store.getters[`${this.storeModuleName}/itemsMap`]
@@ -279,13 +294,37 @@ export default {
       return this.itemsMap[this.$store.state.route.query[QUERY_PARAM_ID]] || null
     },
 
+    /**
+     * @return {Array<IPropertyBaseView>}
+     */
     tableProperties () {
-      return concat(this.itemBaseProperties, this.itemComputedProperties)
+      return concat(this.itemBaseProperties, this.itemComputedTableProperties)
     },
 
-    itemFormView () {
+    /**
+     * @return {Array<IPropertyBaseView>}
+     */
+    formProperties () {
+      return concat(this.itemBaseProperties)
+    },
+
+    /**
+     * @return {IFormView}
+     */
+    itemCreationFormView () {
       return {
-        fields: this.itemBaseProperties,
+        name: `${this.storeModuleName}/creation`,
+        fields: this.formProperties,
+      }
+    },
+
+    /**
+     * @return {IFormView}
+     */
+    itemEditingFormView () {
+      return {
+        name: `${this.storeModuleName}/editing`,
+        fields: this.formProperties,
       }
     },
 
@@ -328,6 +367,24 @@ export default {
   },
 
   methods: {
+    /**
+     * @param {Object} item
+     * @param {Array<IPropertyBaseView>} props
+     * @return {Object}
+     */
+    getCloneWithComputedProps (item, props) {
+      const itemShallowClone = { ...item }
+
+      props.forEach(prop => {
+        itemShallowClone[prop.name] = this.getComputedPropertyValue(
+          itemShallowClone,
+          prop.name,
+        )
+      })
+
+      return itemShallowClone
+    },
+
     selectItem (newSelectedItem) {
       this.$router.push({
         query: {
@@ -338,7 +395,7 @@ export default {
     },
 
     getRowClass ({ row, rowIndex }) {
-      // Добавляем id в класс стоки для поиска
+      // Добавляем id в класс строки для поиска
       // её DOM-элемента по модели данных
       const classNames = [getIdClass(row.id)]
 
@@ -352,6 +409,13 @@ export default {
       return classNames.join('  ')
     },
 
+    /**
+     * @param {Object} row
+     * @param {Object} col
+     * @param {*} value
+     * @param {IPropertyBaseView} fieldView
+     * @return {string | *}
+     */
     defaultTableFormatter (row, col, value, fieldView) {
       switch (fieldView.type) {
         case 'datetime': return value != null
@@ -367,6 +431,7 @@ export default {
      *
      * @param {{ row: Object, column: Object }} elUiRowScope
      * @param {IPropertyBaseView} fieldView
+     * @return {string | *}
      */
     formatCellText (elUiRowScope, fieldView) {
       const value = elUiRowScope.row[fieldView.name]

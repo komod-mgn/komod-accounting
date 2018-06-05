@@ -1,7 +1,13 @@
 import nanoid from 'nanoid'
-import { keyBy } from 'lodash-es'
+import {
+  groupBy,
+  keyBy,
+  mapValues,
+  orderBy,
+} from 'lodash-es'
 
 import { updateVuexState } from '@/utils'
+import { isDateInCurrentSeason } from '@/utils/date'
 import { dbUpdate } from '@/db'
 
 export default {
@@ -20,6 +26,43 @@ export default {
      */
     itemsMap (state) {
       return keyBy(state.items, 'id')
+    },
+
+    // todo optimize !!! heavy calculations on any transaction change
+    itemsMapByClientSortedByDateDesc (state) {
+      const itemsMapByClient = groupBy(
+        state.items,
+        'clientId',
+      )
+
+      return mapValues(
+        itemsMapByClient,
+        items => orderBy(items, ['date'], ['desc'])
+      )
+    },
+
+    // todo optimize !!! heavy calculations on any transaction change
+    currentSeasonItemsAmountByClient (state, getters) {
+      return mapValues(
+        getters.itemsMapByClientSortedByDateDesc,
+        transactions => {
+          let sum = 0
+
+          for (const transaction of transactions) {
+            // Transactions are sorted from recent to old,
+            // and once a transaction is older than season start,
+            // it is and all the next are irrelevant
+            // TODO currently future transactions are considered current season
+            if (!isDateInCurrentSeason(transaction.date)) {
+              break
+            }
+
+            sum += transaction.itemsAmount
+          }
+
+          return sum
+        }
+      )
     },
   },
 

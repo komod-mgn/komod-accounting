@@ -190,4 +190,16 @@ export default {
   .el-table__row.--selected-row {
     background-color: #eaf3e6;
   }
+
+  .el-form-item {
+    display: flex;
+    align-items: center;
+  }
+  .el-form-item__label {
+    line-height: 20px;
+  }
+  .el-form-item__content {
+    flex-grow: 1;
+    margin-left: 0 !important;
+  }
 </style>

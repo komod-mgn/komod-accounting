@@ -57,9 +57,11 @@
       </el-select>
 
       <!-- Transform date string to and from Date object -->
+      <!-- TODO make `picker-options` optional -->
       <el-date-picker
         v-if="field.type === 'datetime'"
         :value="toDateObject(formData[field.name])"
+        :picker-options="datePickerOptions"
         type="datetime"
         @input="val => changeField(field.name, toDateISOString(val))"
       />
@@ -86,6 +88,16 @@ export default {
       type: Object,
       required: true,
     },
+  },
+
+  data () {
+    return {
+      datePickerOptions: {
+        disabledDate (time) {
+          return time.getTime() > Date.now()
+        },
+      },
+    }
   },
 
   methods: {

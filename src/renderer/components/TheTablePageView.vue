@@ -1,6 +1,7 @@
 <template>
   <div
     v-loading="isAsyncOpInProgress"
+    class="tablePageView"
   >
     <el-card
       :body-style="{
@@ -155,59 +156,64 @@
       </el-dialog>
     </el-card>
 
-    <!-- TODO pagination -->
-    <!-- TODO sorting -->
-    <!-- TODO `:max-height` for fixed header -->
-    <el-table
-      :data="itemsWithComputedTableProps"
-      :row-key="'id'"
-      :row-class-name="getRowClass"
-      border
-      @row-click="selectItem"
+    <div
+      ref="tableWrapperEl"
+      class="tablePageView__table-w"
     >
-      <el-table-column
-        type="index"
-        align="center"
-        fixed="left"
-        header-align="center"
-      />
-
-      <el-table-column
-        v-for="field in tableProperties"
-        :key="field.name"
-        :prop="field.name"
-        :label="field.label"
-        :fixed="field.fixedToSide"
-        :min-width="field.minWidth"
-        header-align="center"
-        resizable
-        show-overflow-tooltip
+      <!-- TODO pagination -->
+      <!-- TODO sorting -->
+      <el-table
+        :data="itemsWithComputedTableProps"
+        :row-key="'id'"
+        :row-class-name="getRowClass"
+        :max-height="tableMaxHeight"
+        border
+        @row-click="selectItem"
       >
-        <template slot-scope="scope">
+        <el-table-column
+          type="index"
+          align="center"
+          fixed="left"
+          header-align="center"
+        />
 
-          <!-- refs to hrefs -->
-          <router-link
-            v-if="field.type === 'ref' && field.hrefModuleName"
-            :to="{
-              path: field.hrefModuleName,
-              query: {
-                [field.hrefQueryIdParam]: scope.row[field.name],
-              },
-            }"
-            @click.native.stop
-            v-text="formatCellText(scope, field)"
-          />
+        <el-table-column
+          v-for="field in tableProperties"
+          :key="field.name"
+          :prop="field.name"
+          :label="field.label"
+          :fixed="field.fixedToSide"
+          :min-width="field.minWidth"
+          header-align="center"
+          resizable
+          show-overflow-tooltip
+        >
+          <template slot-scope="scope">
 
-          <!-- Default formatting -->
-          <template
-            v-else
-          >{{
-            formatCellText(scope, field)
-          }}</template>
+            <!-- refs to hrefs -->
+            <router-link
+              v-if="field.type === 'ref' && field.hrefModuleName"
+              :to="{
+                path: field.hrefModuleName,
+                query: {
+                  [field.hrefQueryIdParam]: scope.row[field.name],
+                },
+              }"
+              @click.native.stop
+              v-text="formatCellText(scope, field)"
+            />
 
-        </template>
-      </el-table-column>
-    </el-table>
+            <!-- Default formatting -->
+            <template
+              v-else
+            >{{
+              formatCellText(scope, field)
+            }}</template>
+
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
   </div>
 </template>
 
@@ -269,12 +275,16 @@ export default {
     },
   },
 
-  data: () => ({
-    lastItemCreationModel: null,
-    lastItemEditingModel: null,
-    isDeleteConfirmationVisible: false,
-    isAsyncOpInProgress: false,
-  }),
+  data () {
+    return {
+      lastItemCreationModel: null,
+      lastItemEditingModel: null,
+      isDeleteConfirmationVisible: false,
+      isAsyncOpInProgress: false,
+      tableMaxHeight: 10000,
+      calcTableMaxHeightBound: this.calcTableMaxHeight.bind(this),
+    }
+  },
 
   computed: {
     items () {
@@ -366,7 +376,23 @@ export default {
     },
   },
 
+  mounted () {
+    this.calcTableMaxHeight()
+
+    window.addEventListener('resize', this.calcTableMaxHeightBound)
+  },
+
+  beforeDestroy () {
+    window.removeEventListener('resize', this.calcTableMaxHeightBound)
+  },
+
   methods: {
+    calcTableMaxHeight () {
+      const rect = this.$refs.tableWrapperEl.getBoundingClientRect()
+
+      this.tableMaxHeight = rect.height
+    },
+
     /**
      * @param {Object} item
      * @param {Array<IPropertyBaseView>} props
@@ -529,5 +555,14 @@ export default {
 </script>
 
 <style scoped>
+  .tablePageView {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+  }
 
+  .tablePageView__table-w {
+    flex: 1 1 0;
+    overflow: hidden;
+  }
 </style>

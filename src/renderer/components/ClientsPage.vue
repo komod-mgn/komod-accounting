@@ -1,13 +1,11 @@
 <template>
-  <div>
-    <the-table-page-view
-      :item-base-properties="itemBaseProperties"
-      :item-computed-table-properties="itemComputedTableProperties"
-      :get-item-creation-template-model="getItemCreationTemplateModel"
-      :get-computed-property-value="getComputedPropertyValue"
-      store-module-name="clients"
-    />
-  </div>
+  <the-table-page-view
+    :item-base-properties="itemBaseProperties"
+    :item-computed-table-properties="itemComputedTableProperties"
+    :get-item-creation-template-model="getItemCreationTemplateModel"
+    :get-computed-property-value="getComputedPropertyValue"
+    store-module-name="clients"
+  />
 </template>
 
 <script>

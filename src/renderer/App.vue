@@ -57,7 +57,7 @@
       </el-menu>
     </el-header>
 
-    <el-main>
+    <el-main id="app__content">
       <router-view
         v-if="!isLoading && !lastError"
       />
@@ -155,6 +155,11 @@ export default {
     line-height: var(--header-height);
   }
 
+  #app__content {
+    display: flex;
+    flex-direction: column;
+  }
+
   .router-navigation {
     height: var(--header-height);
     display: flex;
@@ -168,6 +173,7 @@ export default {
 
   .action-panel {
     margin-bottom: 20px;
+    flex: 0 0 auto;
   }
   .action-panel__item + .action-panel__item {
     margin-left: 10px;

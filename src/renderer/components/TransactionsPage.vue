@@ -1,31 +1,29 @@
 <template>
-  <div>
-    <the-table-page-view
-      :item-base-properties="itemBaseProperties"
-      :get-item-creation-template-model="getItemCreationTemplateModel"
-      :store-module-name="storeModuleName"
+  <the-table-page-view
+    :item-base-properties="itemBaseProperties"
+    :get-item-creation-template-model="getItemCreationTemplateModel"
+    :store-module-name="storeModuleName"
+  >
+    <template
+      slot="creation-form-addon"
+      slot-scope="{ model }"
     >
-      <template
-        slot="creation-form-addon"
-        slot-scope="{ model }"
-      >
-        <div
-          class="formAddon__message"
-          v-text="creationFormAddonMessage"
-        />
-      </template>
+      <div
+        class="formAddon__message"
+        v-text="creationFormAddonMessage"
+      />
+    </template>
 
-      <template
-        slot="editing-form-addon"
-        slot-scope="{ model }"
-      >
-        <div
-          class="formAddon__message"
-          v-text="editingFormAddonMessage"
-        />
-      </template>
-    </the-table-page-view>
-  </div>
+    <template
+      slot="editing-form-addon"
+      slot-scope="{ model }"
+    >
+      <div
+        class="formAddon__message"
+        v-text="editingFormAddonMessage"
+      />
+    </template>
+  </the-table-page-view>
 </template>
 
 <script>

@@ -1,18 +1,22 @@
 /**
  * @typedef {
+ *  'ORPHAN' |
+ *  'LOW_INCOME' |
  *  'MANY_CHILDREN' |
  *  'SINGLE_CAREGIVER' |
  *  'DISABILITY' |
+ *  'PENSIONER' |
  *  'FIRE_VICTIM' |
- *  'LOW_INCOME' |
  * } KomodClientStatusEnumValue
  */
 export const KomodClientStatusEnum = {
+  ORPHAN: 'Выпускник детского дома',
+  LOW_INCOME: 'Малоимущий',
   MANY_CHILDREN: 'Многодетная семья',
   SINGLE_CAREGIVER: 'Одинокий родитель (попечитель)',
   DISABILITY: 'Особенности здоровья',
+  PENSIONER: 'Пенсионер',
   FIRE_VICTIM: 'Погорелец',
-  LOW_INCOME: 'Малоимущий',
 }
 
 export class KomodClient {

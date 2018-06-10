@@ -32,8 +32,9 @@ export default {
           name: 'lastName',
           label: 'Фамилия',
           type: 'string',
-          minWidth: 100,
+          minWidth: 120,
           fixedToSide: 'left',
+          sortable: true,
         },
         {
           name: 'firstName',
@@ -41,6 +42,7 @@ export default {
           type: 'string',
           minWidth: 100,
           fixedToSide: 'left',
+          sortable: true,
         },
         {
           name: 'middleName',
@@ -70,7 +72,8 @@ export default {
           name: 'idDocument',
           label: 'Удостоверение №',
           type: 'string',
-          minWidth: 150,
+          minWidth: 170,
+          sortable: true,
         },
         {
           name: 'phoneNumber',
@@ -84,6 +87,7 @@ export default {
           type: 'number',
           minWidth: 90,
           min: 1,
+          sortable: true,
         },
       ],
 
@@ -93,19 +97,22 @@ export default {
           name: 'itemsAmountCurrentSeason',
           label: 'Кол-во взятых вещей (сезон)',
           type: 'number',
-          minWidth: 100,
+          minWidth: 120,
+          sortable: true,
         },
         {
           name: 'itemsAmountTotal',
           label: 'Кол-во взятых вещей (всего)',
           type: 'number',
-          minWidth: 100,
+          minWidth: 120,
+          sortable: true,
         },
         {
           name: 'lastTransactionDate',
           label: 'Последнее посещение',
           type: 'datetime',
-          minWidth: 200,
+          minWidth: 220,
+          sortable: true,
         },
       ],
     }
@@ -139,7 +146,7 @@ export default {
           const lastTransaction = clientTransactions ? clientTransactions[0] : null
           return lastTransaction
             ? lastTransaction.date
-            : undefined
+            : '' // same data type for sorting
       }
     },
   },

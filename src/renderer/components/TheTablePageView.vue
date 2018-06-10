@@ -133,7 +133,16 @@
       class="tablePageView__table-w"
     >
       <!-- TODO pagination -->
-      <!-- TODO sorting -->
+      <!-- TODO На момент написания в `el-table` есть проблема с сортировкой
+      после выбора строки: `current-row` отображается на корректной строке
+      в фиксированных колонках, но на некорректной строке в нефиксированных.
+      Воспроизвести минимальный кейс для issue не удалось,
+      возможно какие-то ещё факторы влияют.
+      Но вообще, здесь `highlight-current-row` не используется,
+      и что `current-row` есть вообще - другой баг (#11560).
+      Проблема не критична и сейчас на это нет времени.
+      Проверить после обновления ElementUI.
+      -->
       <el-table
         :data="itemsWithComputedTableProps"
         :row-key="'id'"
@@ -156,6 +165,7 @@
           :label="field.label"
           :fixed="field.fixedToSide"
           :min-width="field.minWidth"
+          :sortable="field.sortable"
           header-align="center"
           resizable
           show-overflow-tooltip
@@ -416,7 +426,7 @@ export default {
      */
     defaultTableFormatter (row, col, value, fieldView) {
       switch (fieldView.type) {
-        case 'datetime': return value != null
+        case 'datetime': return value
           ? (new Date(value)).toLocaleString('ru-RU')
           : value
       }

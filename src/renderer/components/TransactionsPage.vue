@@ -67,6 +67,7 @@ export default {
               message: requiredFieldMessage,
             },
           ],
+          sortable: true,
         },
         {
           name: 'clientId',
@@ -118,6 +119,7 @@ export default {
               trigger: ['blur', 'change'],
             },
           ],
+          sortable: true,
         },
       ],
 

@@ -196,6 +196,9 @@ export default {
   .el-table__row.--selected-row {
     background-color: #eaf3e6;
   }
+  .el-table .cell {
+    word-break: break-word;
+  }
 
   .el-form-item {
     display: flex;

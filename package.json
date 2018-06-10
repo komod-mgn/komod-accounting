@@ -57,7 +57,7 @@
   "dependencies": {
     "axios": "^0.16.1",
     "electron-context-menu": "^0.9.1",
-    "element-ui": "^2.3.9",
+    "element-ui": "github:st-sloth/element#temp-build-pass-full-form-model",
     "fs-extra": "^6.0.1",
     "lodash-es": "^4.17.10",
     "lowdb": "^1.0.0",

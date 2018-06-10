@@ -85,6 +85,8 @@
           :get-form-data-template="getItemCreationTemplateModel"
           :form-view="itemCreationFormView"
           @model-change="handleItemCreationChange"
+          @cancel="closeItemCreationModal"
+          @accept="submitItemCreationModal"
         >
           <template
             slot="form-addon"
@@ -96,22 +98,6 @@
             />
           </template>
         </base-form-with-intermediate-model-and-events>
-
-        <div slot="footer">
-          <el-button
-            plain
-            type="danger"
-            @click="closeItemCreationModal"
-          >
-            Отмена
-          </el-button>
-          <el-button
-            type="success"
-            @click="submitItemCreationModal"
-          >
-            Сохранить
-          </el-button>
-        </div>
       </el-dialog>
 
       <el-dialog
@@ -126,6 +112,8 @@
           :get-form-data-template="getItemEditingTemplateModel"
           :form-view="itemEditingFormView"
           @model-change="handleItemEditingChange"
+          @cancel="closeItemEditingModal"
+          @accept="submitItemEditingModal"
         >
           <template
             slot="form-addon"
@@ -137,22 +125,6 @@
             />
           </template>
         </base-form-with-intermediate-model-and-events>
-
-        <div slot="footer">
-          <el-button
-            plain
-            type="danger"
-            @click="closeItemEditingModal"
-          >
-            Отмена
-          </el-button>
-          <el-button
-            type="success"
-            @click="submitItemEditingModal"
-          >
-            Сохранить
-          </el-button>
-        </div>
       </el-dialog>
     </el-card>
 

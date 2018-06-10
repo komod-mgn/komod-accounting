@@ -3,6 +3,8 @@
     :form-data="intermediateModel"
     :form-view="formView"
     @input="handleInput"
+    @cancel="() => $emit('cancel')"
+    @accept="() => $emit('accept')"
   >
     <template
       slot="form-addon"
@@ -51,18 +53,15 @@ export default {
   },
 
   data: () => ({
-    initialModel: {},
     intermediateModel: {},
   }),
 
   created () {
-    this.initialModel = this.$props.getFormDataTemplate()
-    this.intermediateModel = cloneDeep(this.initialModel)
+    this.intermediateModel = cloneDeep(this.$props.getFormDataTemplate())
 
     EventBus.$emit('form-change', {
       formName: this.formView.name,
       model: this.intermediateModel,
-      initialModel: this.initialModel,
     })
   },
 
@@ -75,7 +74,6 @@ export default {
       EventBus.$emit('form-change', {
         formName: this.formView.name,
         model: this.intermediateModel,
-        initialModel: this.initialModel,
       })
     },
   },

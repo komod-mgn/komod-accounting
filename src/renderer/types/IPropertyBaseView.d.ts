@@ -21,6 +21,12 @@ export default interface IPropertyBaseView {
     minWidth ?: number
     fixedToSide ?: 'left' | 'right'
 
+    // Controls
+    // http://element.eleme.io/#/en-US/component/form#validation
+    // https://github.com/yiminghe/async-validator#rules
+    validationRules ?: Array<Object>
+    triggerRevalidation ?: boolean
+
     // number - controls
     min ?: number
     max ?: number

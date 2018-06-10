@@ -39,6 +39,7 @@ import { stringifyKomodClient } from '@/types/KomodClient'
 import TheTablePageView from '@/components/TheTablePageView'
 import EventBus from '@/EventBus'
 import { isDateInCurrentSeason } from '@/utils/date'
+import { requiredFieldMessage, takenItemsExcessMessage } from '@/utils/validation'
 
 export default {
   name: 'TransactionsPage',
@@ -59,6 +60,13 @@ export default {
           name: 'date',
           label: 'Дата',
           type: 'datetime',
+          validationRules: [
+            {
+              required: true,
+              trigger: ['blur', 'change'],
+              message: requiredFieldMessage,
+            },
+          ],
         },
         {
           name: 'clientId',
@@ -75,11 +83,41 @@ export default {
           },
           hrefModuleName: 'clients',
           hrefQueryIdParam: QUERY_PARAM_ID,
+          validationRules: [
+            {
+              required: true,
+              trigger: ['blur', 'change'],
+              message: requiredFieldMessage,
+            },
+          ],
+          // При изменении клиента нужно перевалидировать поле "Кол-во вещей",
+          // т.к. остаток от лимита у этого клиента может быть другой
+          triggerRevalidation: true,
         },
         {
           name: 'itemsAmount',
           label: 'Кол-во вещей',
           type: 'number',
+          min: 1,
+          validationRules: [
+            {
+              validator (rule, fieldValue, callback, formModel) {
+                const seasonInfo = self.getClientSeasonItemsInfo(
+                  formModel.clientId,
+                  // При редактировании транзакции имеющееся "Взятое кол-во"
+                  // не должно учитываться во взятом за сезон
+                  formModel.id,
+                )
+
+                if (fieldValue > seasonInfo.remaining) {
+                  callback(new Error(takenItemsExcessMessage))
+                } else {
+                  callback()
+                }
+              },
+              trigger: ['blur', 'change'],
+            },
+          ],
         },
       ],
 
@@ -95,6 +133,7 @@ export default {
   computed: {
     ...mapGetters({
       clientsMap: 'clients/itemsMap',
+      transactionsMap: 'transactions/itemsMap',
       currentSeasonItemsAmountByClient: 'transactions/currentSeasonItemsAmountByClient',
     }),
   },
@@ -116,7 +155,7 @@ export default {
       return new KomodTransaction()
     },
 
-    handleItemFormChange ({ formName, model, initialModel }) {
+    handleItemFormChange ({ formName, model }) {
       // Add message to the form about how many items
       // current transaction can have based on client's limit and history
       if (formName === `${this.storeModuleName}/creation`) {
@@ -127,14 +166,10 @@ export default {
           return
         }
 
-        const clientSeasonLimit = this.clientsMap[model.clientId].seasonItemsLimit
+        const seasonInfo = this.getClientSeasonItemsInfo(model.clientId, model.id)
 
-        const clientSeasonTakenItemsAmount =
-          this.currentSeasonItemsAmountByClient[model.clientId] || 0
-
-        const clientSeasonRemaining = clientSeasonLimit - clientSeasonTakenItemsAmount
-
-        this.creationFormAddonMessage = `У выбранного клиента осталось ${clientSeasonRemaining} вещей из ${clientSeasonLimit}`
+        this.creationFormAddonMessage =
+          `У выбранного клиента осталось ${seasonInfo.remaining} вещей из ${seasonInfo.limit}`
       } else if (formName === `${this.storeModuleName}/editing`) {
         // Client is unset or not yet set
         if (!model.clientId) {
@@ -149,21 +184,40 @@ export default {
           return
         }
 
-        const clientSeasonLimit = this.clientsMap[model.clientId].seasonItemsLimit
+        const seasonInfo = this.getClientSeasonItemsInfo(model.clientId, model.id)
 
-        let clientSeasonTakenItemsAmount =
-          this.currentSeasonItemsAmountByClient[model.clientId] || 0
+        this.editingFormAddonMessage =
+          `У выбранного клиента осталось ${seasonInfo.remaining} вещей из ${seasonInfo.limit}`
+      }
+    },
 
-        // Т.к. редактируем существующую транзакцию, `itemsAmount` в ней на момент
-        // начала редактирования может быть включено в `clientSeasonTakenItemsAmount`.
-        // Вычтем, чтобы показывать "Осталось" без учета текущего значения
-        if (isDateInCurrentSeason(initialModel.date)) {
-          clientSeasonTakenItemsAmount -= initialModel.itemsAmount
+    /**
+     * @param {string} clientId
+     * @param {string =} editedTransactionId
+     * @return {{limit: number, remaining: number}}
+     */
+    getClientSeasonItemsInfo (clientId, editedTransactionId) {
+      const limit = this.clientsMap[clientId]
+        ? this.clientsMap[clientId].seasonItemsLimit
+        : 0
+
+      let taken = this.currentSeasonItemsAmountByClient[clientId] || 0
+
+      // При редактировании существующей транзакции текущго сезона,
+      // её `itemsAmount` включается во "взятое кол-во".
+      // Для UI и валидации, схожими с созданием транзакции,
+      // сделаем "Осталось" без учета текущего значения
+      if (editedTransactionId) {
+        const editedTransaction = this.transactionsMap[editedTransactionId]
+
+        if (editedTransaction && isDateInCurrentSeason(editedTransaction.date)) {
+          taken -= editedTransaction.itemsAmount
         }
+      }
 
-        const clientSeasonRemaining = clientSeasonLimit - clientSeasonTakenItemsAmount
-
-        this.editingFormAddonMessage = `У выбранного клиента осталось ${clientSeasonRemaining} вещей из ${clientSeasonLimit}`
+      return {
+        limit,
+        remaining: limit - taken,
       }
     },
   },
@@ -173,5 +227,6 @@ export default {
 <style scoped>
   .formAddon__message {
     text-align: center;
+    margin-bottom: 20px;
   }
 </style>

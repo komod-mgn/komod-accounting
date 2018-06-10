@@ -201,6 +201,9 @@ export default {
     display: flex;
     align-items: center;
   }
+  .el-form-item:last-child {
+    margin-bottom: 0;
+  }
   .el-form-item__label {
     line-height: 20px;
   }

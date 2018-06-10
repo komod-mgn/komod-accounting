@@ -15,6 +15,7 @@ import {
 import { mapGetters } from 'vuex'
 import { KomodClient, KomodClientStatusEnum } from '@/types/KomodClient'
 import TheTablePageView from '@/components/TheTablePageView'
+import { requiredFieldMessage } from '@/utils/validation'
 
 export default {
   name: 'ClientsPage',
@@ -57,6 +58,13 @@ export default {
           tableFormatter: (row, col, vals) => vals
             .map(val => KomodClientStatusEnum[val])
             .join(', '),
+          validationRules: [
+            {
+              required: true,
+              trigger: ['blur', 'change'],
+              message: requiredFieldMessage,
+            },
+          ],
         },
         {
           name: 'idDocument',
@@ -75,7 +83,7 @@ export default {
           label: 'Норма на сезон',
           type: 'number',
           minWidth: 90,
-          min: 0,
+          min: 1,
         },
       ],
 

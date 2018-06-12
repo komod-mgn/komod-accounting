@@ -324,7 +324,9 @@ export default {
     },
 
     currentPage () {
-      return this.$store.state.route.query[QUERY_PARAM_PAGE] || 1
+      const routePage = this.$store.state.route.query[QUERY_PARAM_PAGE]
+
+      return routePage ? Number(routePage) : 1
     },
 
     currentSort () {

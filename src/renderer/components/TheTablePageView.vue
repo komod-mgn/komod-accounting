@@ -212,10 +212,7 @@
 
 <script>
 import _ from 'lodash'
-import {
-  concat,
-  omit,
-} from 'lodash-es'
+
 import {
   QUERY_PARAM_ID,
   QUERY_PARAM_PAGE,
@@ -359,14 +356,17 @@ export default {
      * @return {Array<IPropertyBaseView>}
      */
     tableProperties () {
-      return concat(this.itemBaseProperties, this.itemComputedTableProperties)
+      return _.concat(
+        this.itemBaseProperties,
+        this.itemComputedTableProperties,
+      )
     },
 
     /**
      * @return {Array<IPropertyBaseView>}
      */
     formProperties () {
-      return concat(this.itemBaseProperties)
+      return this.itemBaseProperties
     },
 
     /**
@@ -496,7 +496,7 @@ export default {
     changePage (newCurrentPage) {
       this.$router.push({
         query: {
-          ...omit(this.$store.state.route.query, [
+          ..._.omit(this.$store.state.route.query, [
             QUERY_PARAM_MODE,
             QUERY_PARAM_ID,
           ]),
@@ -509,7 +509,7 @@ export default {
       if (prop) {
         this.$router.push({
           query: {
-            ...omit(this.$store.state.route.query, [
+            ..._.omit(this.$store.state.route.query, [
               QUERY_PARAM_MODE,
               QUERY_PARAM_ID,
               QUERY_PARAM_PAGE,
@@ -520,7 +520,7 @@ export default {
       } else {
         this.$router.push({
           query: {
-            ...omit(this.$store.state.route.query, [
+            ..._.omit(this.$store.state.route.query, [
               QUERY_PARAM_MODE,
               QUERY_PARAM_ID,
               QUERY_PARAM_PAGE,
@@ -534,7 +534,7 @@ export default {
     selectItem (newSelectedItem) {
       this.$router.push({
         query: {
-          ...omit(this.$store.state.route.query, QUERY_PARAM_MODE),
+          ..._.omit(this.$store.state.route.query, QUERY_PARAM_MODE),
           [QUERY_PARAM_ID]: newSelectedItem.id,
         },
       })
@@ -602,7 +602,7 @@ export default {
     },
     closeItemCreationModal () {
       this.$router.push({
-        query: omit(this.$store.state.route.query, QUERY_PARAM_MODE),
+        query: _.omit(this.$store.state.route.query, QUERY_PARAM_MODE),
       })
     },
     handleItemCreationChange (newItem) {
@@ -637,7 +637,7 @@ export default {
     },
     closeItemEditingModal () {
       this.$router.push({
-        query: omit(this.$store.state.route.query, QUERY_PARAM_MODE),
+        query: _.omit(this.$store.state.route.query, QUERY_PARAM_MODE),
       })
     },
     handleItemEditingChange (newItem) {
@@ -665,7 +665,7 @@ export default {
       await this.$store.dispatch(`${this.storeModuleName}/deleteItem`, this.currentSelectedItem)
 
       this.$router.push({
-        query: omit(this.$store.state.route.query, [QUERY_PARAM_ID, QUERY_PARAM_MODE]),
+        query: _.omit(this.$store.state.route.query, [QUERY_PARAM_ID, QUERY_PARAM_MODE]),
       })
 
       this.isAsyncOpInProgress = false

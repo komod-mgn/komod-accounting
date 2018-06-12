@@ -99,7 +99,7 @@
 </template>
 
 <script>
-import { isString, isDate } from 'lodash-es'
+import _ from 'lodash'
 
 const formName = 'form'
 
@@ -182,7 +182,7 @@ export default {
      * @return {Date | null | undefined}
      */
     toDateObject (dateISOstr) {
-      return isString(dateISOstr)
+      return _.isString(dateISOstr)
         ? new Date(dateISOstr)
         : dateISOstr
     },
@@ -192,7 +192,7 @@ export default {
      * @return {string | null | undefined}
      */
     toDateISOString (date) {
-      return isDate(date)
+      return _.isDate(date)
         ? date.toISOString()
         : date
     },

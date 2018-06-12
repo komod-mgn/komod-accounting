@@ -19,7 +19,8 @@
 </template>
 
 <script>
-import { cloneDeep } from 'lodash-es'
+import _ from 'lodash'
+
 import EventBus from '@/EventBus'
 import BaseForm from '@/components/BaseForm'
 
@@ -57,7 +58,7 @@ export default {
   }),
 
   created () {
-    this.intermediateModel = cloneDeep(this.$props.getFormDataTemplate())
+    this.intermediateModel = _.cloneDeep(this.$props.getFormDataTemplate())
 
     EventBus.$emit('form-change', {
       formName: this.formView.name,

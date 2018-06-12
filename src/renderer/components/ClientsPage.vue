@@ -9,10 +9,9 @@
 </template>
 
 <script>
-import {
-  sumBy,
-} from 'lodash-es'
+import _ from 'lodash'
 import { mapGetters } from 'vuex'
+
 import { KomodClient, KomodClientStatusEnum } from '@/types/KomodClient'
 import TheTablePageView from '@/components/TheTablePageView'
 import { requiredFieldMessage } from '@/utils/validation'
@@ -136,7 +135,7 @@ export default {
           return this.currentSeasonItemsAmountByClient[item.id] || 0
 
         case 'itemsAmountTotal':
-          return sumBy(
+          return _.sumBy(
             this.transactionsMapByClientSortedByDateDesc[item.id],
             'itemsAmount',
           )

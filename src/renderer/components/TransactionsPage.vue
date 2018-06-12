@@ -27,10 +27,9 @@
 </template>
 
 <script>
-import {
-  forEach,
-} from 'lodash-es'
+import _ from 'lodash'
 import { mapGetters } from 'vuex'
+
 import {
   QUERY_PARAM_ID,
 } from '@/router/table-view-constants'
@@ -141,13 +140,13 @@ export default {
   },
 
   created () {
-    forEach(this.globalEventHandlers, (handler, event) => {
+    _.forEach(this.globalEventHandlers, (handler, event) => {
       EventBus.$on(event, handler)
     })
   },
 
   beforeDestroy () {
-    forEach(this.globalEventHandlers, (handler, event) => {
+    _.forEach(this.globalEventHandlers, (handler, event) => {
       EventBus.$off(event, handler)
     })
   },

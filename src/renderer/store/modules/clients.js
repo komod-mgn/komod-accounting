@@ -1,5 +1,5 @@
 import nanoid from 'nanoid'
-import { keyBy } from 'lodash-es'
+import _ from 'lodash'
 
 import { updateVuexState } from '@/utils'
 import { dbUpdate } from '@/db'
@@ -19,7 +19,7 @@ export default {
      * @return {Object<string, KomodClient>}
      */
     itemsMap (state) {
-      return keyBy(state.items, 'id')
+      return _.keyBy(state.items, 'id')
     },
   },
 

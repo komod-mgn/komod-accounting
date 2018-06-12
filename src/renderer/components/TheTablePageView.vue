@@ -144,12 +144,13 @@
       Проверить после обновления ElementUI.
       -->
       <el-table
-        :data="itemsWithComputedTableProps"
+        :data="currentPageSortedItemsWithComputedTableProps"
         :row-key="'id'"
         :row-class-name="getRowClass"
         :max-height="tableMaxHeight"
         border
         @row-click="selectItem"
+        @sort-change="changeSort"
       >
         <el-table-column
           type="index"
@@ -165,7 +166,8 @@
           :label="field.label"
           :fixed="field.fixedToSide"
           :min-width="field.minWidth"
-          :sortable="field.sortable"
+          :sortable="field.sortable ? 'custom' : false"
+          :default-sort="currentSort"
           header-align="center"
           resizable
           show-overflow-tooltip
@@ -196,17 +198,28 @@
         </el-table-column>
       </el-table>
     </div>
+
+    <el-pagination
+      :current-page="currentPage"
+      :page-size="tableRowsPerPage"
+      :total="items.length"
+      background
+      class="paginator"
+      @current-change="changePage"
+    />
   </div>
 </template>
 
 <script>
+import _ from 'lodash'
 import {
   concat,
-  map,
   omit,
 } from 'lodash-es'
 import {
   QUERY_PARAM_ID,
+  QUERY_PARAM_PAGE,
+  QUERY_PARAM_SORT,
   QUERY_PARAM_MODE,
   QUERY_PARAM_MODE_CREATE,
   QUERY_PARAM_MODE_EDIT,
@@ -261,10 +274,14 @@ export default {
     return {
       lastItemCreationModel: null,
       lastItemEditingModel: null,
+
       isDeleteConfirmationVisible: false,
       isAsyncOpInProgress: false,
+
       tableMaxHeight: 10000,
       calcTableMaxHeightBound: this.calcTableMaxHeight.bind(this),
+
+      tableRowsPerPage: 10,
     }
   },
 
@@ -272,14 +289,66 @@ export default {
     items () {
       return this.$store.state[this.storeModuleName].items
     },
-    itemsWithComputedTableProps () {
-      return map(
-        this.items,
-        item => this.getCloneWithComputedProps(item, this.itemComputedTableProperties),
-      )
-    },
     itemsMap () {
       return this.$store.getters[`${this.storeModuleName}/itemsMap`]
+    },
+
+    sortedItems () {
+      const { prop, order } = this.currentSort
+
+      if (!prop) return this.items
+
+      if (this.isComputedProp(prop)) {
+        // Computed props are not present in `items`,
+        // but sorting by them requires their existence
+        // for the entire dataset.
+
+        // Recalculating when occasional sort change happens
+        // seems to be preferable over having a copy of `items` objects
+        // with merged comp props and constantly spending >2x memory
+        const calcPropItemsMap = {}
+
+        _.forEach(this.items, (item) => {
+          calcPropItemsMap[item.id] = this.getComputedPropertyValue(item, prop)
+        })
+
+        return _.orderBy(
+          this.items,
+          [item => calcPropItemsMap[item.id]],
+          [order === 'ascending' ? 'asc' : 'desc'],
+        )
+      }
+
+      return _.orderBy(
+        this.items,
+        [prop],
+        [order === 'ascending' ? 'asc' : 'desc'],
+      )
+    },
+
+    currentPage () {
+      return this.$store.state.route.query[QUERY_PARAM_PAGE] || 1
+    },
+
+    currentSort () {
+      const sortString = this.$store.state.route.query[QUERY_PARAM_SORT]
+
+      if (!sortString) return {}
+
+      const [ prop, order ] = sortString.split('-')
+      return { prop, order }
+    },
+
+    currentPageSortedItemsWithComputedTableProps () {
+      const currentPageZeroBased = this.currentPage - 1
+
+      return _.chain(this.sortedItems)
+        .slice(
+          this.tableRowsPerPage * currentPageZeroBased,
+          this.tableRowsPerPage * (currentPageZeroBased + 1),
+        )
+        .map(item => this.getCloneWithComputedProps(item, this.itemComputedTableProperties))
+        .value()
     },
 
     currentSelectedItem () {
@@ -338,6 +407,20 @@ export default {
     currentSelectedItem: {
       immediate: true,
       handler (newVal) {
+        // If item is selected but page is unknown
+        if (newVal && !this.$store.state.route.query[QUERY_PARAM_PAGE]) {
+          const itemPage = this.calcSelectedItemPage()
+
+          if (itemPage !== null) {
+            this.$router.replace({
+              query: {
+                ...this.$store.state.route.query,
+                [QUERY_PARAM_PAGE]: itemPage,
+              },
+            })
+          }
+        }
+
         // Watcher is first called before component is rendered,
         // so have to wait until the row element exists and
         // row is not yet de-selected
@@ -369,6 +452,23 @@ export default {
   },
 
   methods: {
+    isComputedProp (propName) {
+      return _.some(this.itemComputedTableProperties, compProp => compProp.name === propName)
+    },
+
+    calcSelectedItemPage () {
+      if (this.currentSelectedItem) {
+        const itemIdx = _.indexOf(
+          this.sortedItems,
+          this.currentSelectedItem
+        )
+
+        return Math.floor(itemIdx / this.tableRowsPerPage) + 1
+      }
+
+      return null
+    },
+
     calcTableMaxHeight () {
       const rect = this.$refs.tableWrapperEl.getBoundingClientRect()
 
@@ -391,6 +491,44 @@ export default {
       })
 
       return itemShallowClone
+    },
+
+    changePage (newCurrentPage) {
+      this.$router.push({
+        query: {
+          ...omit(this.$store.state.route.query, [
+            QUERY_PARAM_MODE,
+            QUERY_PARAM_ID,
+          ]),
+          [QUERY_PARAM_PAGE]: newCurrentPage,
+        },
+      })
+    },
+
+    changeSort ({ prop, order }) {
+      if (prop) {
+        this.$router.push({
+          query: {
+            ...omit(this.$store.state.route.query, [
+              QUERY_PARAM_MODE,
+              QUERY_PARAM_ID,
+              QUERY_PARAM_PAGE,
+            ]),
+            [QUERY_PARAM_SORT]: prop + '-' + order,
+          },
+        })
+      } else {
+        this.$router.push({
+          query: {
+            ...omit(this.$store.state.route.query, [
+              QUERY_PARAM_MODE,
+              QUERY_PARAM_ID,
+              QUERY_PARAM_PAGE,
+              QUERY_PARAM_SORT,
+            ]),
+          },
+        })
+      }
     },
 
     selectItem (newSelectedItem) {
@@ -546,5 +684,9 @@ export default {
   .tablePageView__table-w {
     flex: 1 1 0;
     overflow: hidden;
+  }
+
+  .paginator {
+    margin-top: 20px;
   }
 </style>

@@ -229,6 +229,8 @@ function getIdClass (id) {
   return `id--${id}`
 }
 
+const SORT_PARAMS_SEPARATOR = '-'
+
 export default {
   name: 'TheTablePageView',
 
@@ -334,7 +336,7 @@ export default {
 
       if (!sortString) return {}
 
-      const [ prop, order ] = sortString.split('-')
+      const [ prop, order ] = sortString.split(SORT_PARAMS_SEPARATOR)
       return { prop, order }
     },
 
@@ -516,7 +518,7 @@ export default {
               QUERY_PARAM_ID,
               QUERY_PARAM_PAGE,
             ]),
-            [QUERY_PARAM_SORT]: prop + '-' + order,
+            [QUERY_PARAM_SORT]: prop + SORT_PARAMS_SEPARATOR + order,
           },
         })
       } else {

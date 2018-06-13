@@ -4,7 +4,7 @@
     :form-view="formView"
     @input="handleInput"
     @cancel="() => $emit('cancel')"
-    @accept="() => $emit('accept')"
+    @accept="() => $emit('accept', intermediateModel)"
   >
     <template
       slot="form-addon"
@@ -70,7 +70,7 @@ export default {
     handleInput ({ name, value }) {
       this.intermediateModel[name] = value
 
-      this.$emit('model-change', this.intermediateModel)
+      // this.$emit('model-change', this.intermediateModel)
 
       EventBus.$emit('form-change', {
         formName: this.formView.name,

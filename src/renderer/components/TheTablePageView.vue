@@ -84,7 +84,6 @@
         <base-form-with-intermediate-model-and-events
           :get-form-data-template="getItemCreationTemplateModel"
           :form-view="itemCreationFormView"
-          @model-change="handleItemCreationChange"
           @cancel="closeItemCreationModal"
           @accept="submitItemCreationModal"
         >
@@ -111,7 +110,6 @@
         <base-form-with-intermediate-model-and-events
           :get-form-data-template="getItemEditingTemplateModel"
           :form-view="itemEditingFormView"
-          @model-change="handleItemEditingChange"
           @cancel="closeItemEditingModal"
           @accept="submitItemEditingModal"
         >
@@ -271,9 +269,6 @@ export default {
 
   data () {
     return {
-      lastItemCreationModel: null,
-      lastItemEditingModel: null,
-
       isDeleteConfirmationVisible: false,
       isAsyncOpInProgress: false,
 
@@ -609,13 +604,10 @@ export default {
         query: _.omit(this.$store.state.route.query, QUERY_PARAM_MODE),
       })
     },
-    handleItemCreationChange (newItem) {
-      this.lastItemCreationModel = newItem
-    },
-    async submitItemCreationModal () {
+    async submitItemCreationModal (acceptedItem) {
       this.isAsyncOpInProgress = true
 
-      await this.$store.dispatch(`${this.storeModuleName}/updateItem`, this.lastItemCreationModel)
+      await this.$store.dispatch(`${this.storeModuleName}/updateItem`, acceptedItem)
 
       this.closeItemCreationModal()
 
@@ -644,13 +636,10 @@ export default {
         query: _.omit(this.$store.state.route.query, QUERY_PARAM_MODE),
       })
     },
-    handleItemEditingChange (newItem) {
-      this.lastItemEditingModel = newItem
-    },
-    async submitItemEditingModal () {
+    async submitItemEditingModal (acceptedItem) {
       this.isAsyncOpInProgress = true
 
-      await this.$store.dispatch(`${this.storeModuleName}/updateItem`, this.lastItemEditingModel)
+      await this.$store.dispatch(`${this.storeModuleName}/updateItem`, acceptedItem)
 
       this.closeItemEditingModal()
 

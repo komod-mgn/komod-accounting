@@ -82,6 +82,7 @@
       }"
     >
       <el-button
+        round
         plain
         type="danger"
         @click="cancelForm"
@@ -89,6 +90,7 @@
         Отмена
       </el-button>
       <el-button
+        round
         type="success"
         @click="acceptForm"
       >

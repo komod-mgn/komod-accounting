@@ -34,6 +34,7 @@ export default {
           minWidth: 120,
           fixedToSide: 'left',
           sortable: true,
+          filterable: true,
         },
         {
           name: 'firstName',
@@ -42,7 +43,9 @@ export default {
           minWidth: 100,
           fixedToSide: 'left',
           sortable: true,
+          filterable: true,
         },
+        // TODO нужно ли вообще отчество?
         {
           name: 'middleName',
           label: 'Отчество',
@@ -59,6 +62,7 @@ export default {
           tableFormatter: (row, col, vals) => vals
             .map(val => KomodClientStatusEnum[val])
             .join(', '),
+          filterable: true,
           validationRules: [
             {
               required: true,
@@ -73,12 +77,14 @@ export default {
           type: 'string',
           minWidth: 170,
           sortable: true,
+          filterable: true,
         },
         {
           name: 'phoneNumber',
           label: 'Телефон',
           type: 'string',
           minWidth: 100,
+          filterable: true,
         },
         {
           name: 'seasonItemsLimit',
@@ -112,6 +118,7 @@ export default {
           type: 'datetime',
           minWidth: 220,
           sortable: true,
+          filterable: true,
         },
       ],
     }

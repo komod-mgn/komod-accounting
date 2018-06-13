@@ -21,6 +21,7 @@ export default interface IPropertyBaseView {
     minWidth ?: number
     fixedToSide ?: 'left' | 'right'
     sortable ?: boolean
+    filterable ?: boolean
 
     // Controls
     // http://element.eleme.io/#/en-US/component/form#validation

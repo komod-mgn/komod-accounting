@@ -67,6 +67,7 @@ export default {
             },
           ],
           sortable: true,
+          filterable: true,
         },
         {
           name: 'clientId',
@@ -83,6 +84,7 @@ export default {
           },
           hrefModuleName: 'clients',
           hrefQueryIdParam: QUERY_PARAM_ID,
+          filterable: true,
           validationRules: [
             {
               required: true,

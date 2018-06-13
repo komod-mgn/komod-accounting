@@ -200,6 +200,10 @@ export default {
     word-break: break-word;
   }
 
+  .el-dialog__body {
+    padding: 20px;
+  }
+
   .el-form-item {
     display: flex;
     align-items: center;

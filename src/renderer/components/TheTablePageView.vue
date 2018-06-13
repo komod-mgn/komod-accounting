@@ -9,9 +9,33 @@
       }"
       class="action-panel"
     >
+      <el-button-group
+        v-if="filterableTableProperties.length > 0"
+        class="action-panel__item"
+      >
+        <el-button
+          round
+          type="primary"
+          icon="el-icon-search"
+          @click="openFilteringModal"
+        >
+          Поиск
+        </el-button>
+
+        <el-button
+          v-if="currentFilter"
+          round
+          type="primary"
+          icon="el-icon-close"
+          @click="resetFiltering"
+        >
+          Сбросить
+        </el-button>
+      </el-button-group>
+
       <el-button
         round
-        type="primary"
+        type="success"
         icon="el-icon-plus"
         class="action-panel__item"
         @click="openItemCreationModal"
@@ -75,16 +99,32 @@
       -->
       <el-dialog
         v-loading="isAsyncOpInProgress"
+        v-if="isFilteringModalActive"
+        :visible="isFilteringModalActive"
+        :close-on-click-modal="false"
+        title="Поиск"
+        @close="closeModal"
+      >
+        <base-form-with-intermediate-model-and-events
+          :get-form-data-template="getFilteringTemplateModel"
+          :form-view="filteringFormView"
+          @cancel="closeModal"
+          @accept="submitFilteringModal"
+        />
+      </el-dialog>
+
+      <el-dialog
+        v-loading="isAsyncOpInProgress"
         v-if="isItemCreationModalActive"
         :visible="isItemCreationModalActive"
         :close-on-click-modal="false"
         title="Создание"
-        @close="closeItemCreationModal"
+        @close="closeModal"
       >
         <base-form-with-intermediate-model-and-events
           :get-form-data-template="getItemCreationTemplateModel"
           :form-view="itemCreationFormView"
-          @cancel="closeItemCreationModal"
+          @cancel="closeModal"
           @accept="submitItemCreationModal"
         >
           <template
@@ -105,12 +145,12 @@
         :visible="isItemEditingModalActive"
         :close-on-click-modal="false"
         title="Редактирование"
-        @close="closeItemEditingModal"
+        @close="closeModal"
       >
         <base-form-with-intermediate-model-and-events
           :get-form-data-template="getItemEditingTemplateModel"
           :form-view="itemEditingFormView"
-          @cancel="closeItemEditingModal"
+          @cancel="closeModal"
           @accept="submitItemEditingModal"
         >
           <template
@@ -130,7 +170,6 @@
       ref="tableWrapperEl"
       class="tablePageView__table-w"
     >
-      <!-- TODO pagination -->
       <!-- TODO На момент написания в `el-table` есть проблема с сортировкой
       после выбора строки: `current-row` отображается на корректной строке
       в фиксированных колонках, но на некорректной строке в нефиксированных.
@@ -215,9 +254,11 @@ import {
   QUERY_PARAM_ID,
   QUERY_PARAM_PAGE,
   QUERY_PARAM_SORT,
-  QUERY_PARAM_MODE,
-  QUERY_PARAM_MODE_CREATE,
-  QUERY_PARAM_MODE_EDIT,
+  QUERY_PARAM_FILTER,
+  QUERY_PARAM_MODAL,
+  QUERY_PARAM_MODAL_FILTER,
+  QUERY_PARAM_MODAL_CREATE,
+  QUERY_PARAM_MODAL_EDIT,
 } from '@/router/table-view-constants'
 import BaseFormWithIntermediateModelAndEvents from '@/components/BaseFormWithIntermediateModelAndEvents'
 
@@ -228,6 +269,52 @@ function getIdClass (id) {
 }
 
 const SORT_PARAMS_SEPARATOR = '-'
+
+function formatSortRouterParam ({ prop, order }) {
+  return prop + SORT_PARAMS_SEPARATOR + order
+}
+
+function parseSortRouterParam (sortString) {
+  // TODO make null and handle accordingly ?
+  if (!sortString) return {}
+
+  const [ prop, order ] = sortString.split(SORT_PARAMS_SEPARATOR)
+  return { prop, order }
+}
+
+function formatFilterRouterParam (filterModel) {
+  return JSON.stringify(filterModel)
+}
+
+function parseFilterRouterParam (filterString) {
+  if (!filterString) return null
+
+  const filterObj = JSON.parse(filterString)
+
+  return isEmptyFilterModel(filterObj) ? null : filterObj
+}
+
+/**
+ * @param {*} value
+ * @return {boolean}
+ */
+function isMeaningfulFilterValue (value) {
+  return !([null, undefined, ''].includes(value))
+}
+
+/**
+ * Filter model is considered empty if it's not
+ * an object with properties that contain meaningful values
+ * @param {Object | null} filterModel
+ * @return {boolean}
+ */
+function isEmptyFilterModel (filterModel) {
+  return (
+    !_.isObject(filterModel) ||
+    _.isEmpty(filterModel) ||
+    _.every(filterModel, prop => !isMeaningfulFilterValue(prop))
+  )
+}
 
 export default {
   name: 'TheTablePageView',
@@ -327,12 +414,11 @@ export default {
     },
 
     currentSort () {
-      const sortString = this.$store.state.route.query[QUERY_PARAM_SORT]
+      return parseSortRouterParam(this.$store.state.route.query[QUERY_PARAM_SORT])
+    },
 
-      if (!sortString) return {}
-
-      const [ prop, order ] = sortString.split(SORT_PARAMS_SEPARATOR)
-      return { prop, order }
+    currentFilter () {
+      return parseFilterRouterParam(this.$store.state.route.query[QUERY_PARAM_FILTER])
     },
 
     currentPageSortedItemsWithComputedTableProps () {
@@ -364,8 +450,44 @@ export default {
     /**
      * @return {Array<IPropertyBaseView>}
      */
+    filterableTableProperties () {
+      return _.filter(
+        this.tableProperties,
+        prop => prop.filterable,
+      )
+    },
+
+    /**
+     * @return {Array<IPropertyBaseView>}
+     */
     formProperties () {
       return this.itemBaseProperties
+    },
+
+    /**
+     * @return {IFormView}
+     */
+    filteringFormView () {
+      // TODO
+      const filteringTypesMap = {
+        'string': 'string',
+        'datetime': 'date-range',
+      }
+
+      const filteringFormProps = _.map(
+        this.filterableTableProperties,
+        prop => ({
+          ..._.omit(prop, [
+            'validationRules',
+          ]),
+          type: filteringTypesMap[prop.type],
+        }),
+      )
+
+      return {
+        name: `${this.storeModuleName}/filtering`,
+        fields: filteringFormProps,
+      }
     },
 
     /**
@@ -388,16 +510,22 @@ export default {
       }
     },
 
+    isFilteringModalActive () {
+      return (
+        this.$store.state.route.query[QUERY_PARAM_MODAL] === QUERY_PARAM_MODAL_FILTER
+      )
+    },
+
     isItemCreationModalActive () {
       return (
-        this.$store.state.route.query[QUERY_PARAM_MODE] === QUERY_PARAM_MODE_CREATE
+        this.$store.state.route.query[QUERY_PARAM_MODAL] === QUERY_PARAM_MODAL_CREATE
       )
     },
 
     isItemEditingModalActive () {
       return (
         this.currentSelectedItem &&
-        this.$store.state.route.query[QUERY_PARAM_MODE] === QUERY_PARAM_MODE_EDIT
+        this.$store.state.route.query[QUERY_PARAM_MODAL] === QUERY_PARAM_MODAL_EDIT
       )
     },
   },
@@ -496,7 +624,7 @@ export default {
       this.$router.push({
         query: {
           ..._.omit(this.$store.state.route.query, [
-            QUERY_PARAM_MODE,
+            QUERY_PARAM_MODAL,
             QUERY_PARAM_ID,
           ]),
           [QUERY_PARAM_PAGE]: newCurrentPage,
@@ -509,18 +637,18 @@ export default {
         this.$router.push({
           query: {
             ..._.omit(this.$store.state.route.query, [
-              QUERY_PARAM_MODE,
+              QUERY_PARAM_MODAL,
               QUERY_PARAM_ID,
               QUERY_PARAM_PAGE,
             ]),
-            [QUERY_PARAM_SORT]: prop + SORT_PARAMS_SEPARATOR + order,
+            [QUERY_PARAM_SORT]: formatSortRouterParam({ prop, order }),
           },
         })
       } else {
         this.$router.push({
           query: {
             ..._.omit(this.$store.state.route.query, [
-              QUERY_PARAM_MODE,
+              QUERY_PARAM_MODAL,
               QUERY_PARAM_ID,
               QUERY_PARAM_PAGE,
               QUERY_PARAM_SORT,
@@ -530,10 +658,43 @@ export default {
       }
     },
 
+    changeFilter (filterModel) {
+      const meaningfulFilter = _.omitBy(
+        filterModel,
+        prop => !isMeaningfulFilterValue(prop)
+      )
+
+      if (
+        !isEmptyFilterModel(meaningfulFilter)
+      ) {
+        this.$router.push({
+          query: {
+            ..._.omit(this.$store.state.route.query, [
+              QUERY_PARAM_MODAL,
+              QUERY_PARAM_ID,
+              QUERY_PARAM_PAGE,
+            ]),
+            [QUERY_PARAM_FILTER]: formatFilterRouterParam(meaningfulFilter),
+          },
+        })
+      } else {
+        this.$router.push({
+          query: {
+            ..._.omit(this.$store.state.route.query, [
+              QUERY_PARAM_MODAL,
+              QUERY_PARAM_ID,
+              QUERY_PARAM_PAGE,
+              QUERY_PARAM_FILTER,
+            ]),
+          },
+        })
+      }
+    },
+
     selectItem (newSelectedItem) {
       this.$router.push({
         query: {
-          ..._.omit(this.$store.state.route.query, QUERY_PARAM_MODE),
+          ..._.omit(this.$store.state.route.query, QUERY_PARAM_MODAL),
           [QUERY_PARAM_ID]: newSelectedItem.id,
         },
       })
@@ -589,19 +750,42 @@ export default {
       )
     },
 
+    closeModal () {
+      this.$router.push({
+        query: _.omit(this.$store.state.route.query, QUERY_PARAM_MODAL),
+      })
+    },
+
+    // --- Filtering ---
+
+    getFilteringTemplateModel () {
+      return this.currentFilter || {}
+    },
+    openFilteringModal () {
+      this.$router.push({
+        query: {
+          ...this.$store.state.route.query,
+          [QUERY_PARAM_MODAL]: QUERY_PARAM_MODAL_FILTER,
+        },
+      })
+    },
+    submitFilteringModal (filterModel) {
+      this.closeModal()
+
+      this.changeFilter(filterModel)
+    },
+    resetFiltering () {
+      this.changeFilter(null)
+    },
+
     // --- Creation ---
 
     openItemCreationModal () {
       this.$router.push({
         query: {
           ...this.$store.state.route.query,
-          [QUERY_PARAM_MODE]: QUERY_PARAM_MODE_CREATE,
+          [QUERY_PARAM_MODAL]: QUERY_PARAM_MODAL_CREATE,
         },
-      })
-    },
-    closeItemCreationModal () {
-      this.$router.push({
-        query: _.omit(this.$store.state.route.query, QUERY_PARAM_MODE),
       })
     },
     async submitItemCreationModal (acceptedItem) {
@@ -609,7 +793,7 @@ export default {
 
       await this.$store.dispatch(`${this.storeModuleName}/updateItem`, acceptedItem)
 
-      this.closeItemCreationModal()
+      this.closeModal()
 
       this.isAsyncOpInProgress = false
     },
@@ -627,13 +811,8 @@ export default {
       this.$router.push({
         query: {
           ...this.$store.state.route.query,
-          [QUERY_PARAM_MODE]: QUERY_PARAM_MODE_EDIT,
+          [QUERY_PARAM_MODAL]: QUERY_PARAM_MODAL_EDIT,
         },
-      })
-    },
-    closeItemEditingModal () {
-      this.$router.push({
-        query: _.omit(this.$store.state.route.query, QUERY_PARAM_MODE),
       })
     },
     async submitItemEditingModal (acceptedItem) {
@@ -641,7 +820,7 @@ export default {
 
       await this.$store.dispatch(`${this.storeModuleName}/updateItem`, acceptedItem)
 
-      this.closeItemEditingModal()
+      this.closeModal()
 
       this.isAsyncOpInProgress = false
     },
@@ -658,7 +837,10 @@ export default {
       await this.$store.dispatch(`${this.storeModuleName}/deleteItem`, this.currentSelectedItem)
 
       this.$router.push({
-        query: _.omit(this.$store.state.route.query, [QUERY_PARAM_ID, QUERY_PARAM_MODE]),
+        query: _.omit(this.$store.state.route.query, [
+          QUERY_PARAM_ID,
+          QUERY_PARAM_MODAL,
+        ]),
       })
 
       this.isAsyncOpInProgress = false

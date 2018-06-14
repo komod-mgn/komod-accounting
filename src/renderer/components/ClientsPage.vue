@@ -55,9 +55,8 @@ export default {
         {
           name: 'status',
           label: 'Статус',
-          type: 'enum',
+          type: 'multienum',
           minWidth: 150,
-          multiple: true,
           optionsMap: KomodClientStatusEnum,
           tableFormatter: (row, col, vals) => vals
             .map(val => KomodClientStatusEnum[val])

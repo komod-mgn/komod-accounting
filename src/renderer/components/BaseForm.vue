@@ -30,8 +30,8 @@
       />
 
       <el-select
-        v-if="field.type === 'enum'"
-        :multiple="field.multiple"
+        v-if="field.type === 'enum' || field.type === 'multienum'"
+        :multiple="field.type === 'multienum'"
         :value="formData[field.name]"
         filterable
         @input="val => changeField(field, val)"
@@ -45,7 +45,8 @@
       </el-select>
 
       <el-select
-        v-if="field.type === 'ref'"
+        v-if="field.type === 'ref' || field.type === 'multiref'"
+        :multiple="field.type === 'multiref'"
         :value="formData[field.name]"
         clearable
         filterable
@@ -59,14 +60,13 @@
         />
       </el-select>
 
-      <!-- Transform date string to and from Date object -->
       <!-- TODO make `picker-options` optional -->
       <el-date-picker
-        v-if="field.type === 'datetime'"
-        :value="toDateObject(formData[field.name])"
+        v-if="field.type === 'datetime' || field.type === 'daterange'"
+        :value="prepareDatepickerInputValue(formData[field.name])"
+        :type="field.type"
         :picker-options="datePickerOptions"
-        type="datetime"
-        @input="val => changeField(field, toDateISOString(val))"
+        @input="val => changeField(field, transformDatepickerOutputPayload(val))"
       />
 
     </el-form-item>
@@ -104,6 +104,9 @@
 import _ from 'lodash'
 
 const formName = 'form'
+
+/** @typedef {Date | null | undefined} DateObjInput */
+/** @typedef {string | null | undefined} DateStrInput */
 
 export default {
   name: 'BaseForm',
@@ -160,8 +163,16 @@ export default {
         })
 
         // If needed, revalidate entire form after the field is changed
-        // (and ignore result, so no unhandled rejection)
-        if (field.triggerRevalidation) {
+        // (and ignore result, so no unhandled rejection).
+        if (
+          field.triggerRevalidation &&
+
+          // Also, currently, `el-select` with `multiple`, in `created` hook,
+          // immediately emits `[]` if its `value` is not an array (like `undefined`).
+          // This happens before the current component finished its initialization
+          // and has got `$refs` populated. So ignoring this update.
+          this.$refs[formName]
+        ) {
           this.$refs[formName].validate(() => {})
         }
       }
@@ -180,8 +191,45 @@ export default {
     },
 
     /**
-     * @param {string | null | undefined} dateISOstr
-     * @return {Date | null | undefined}
+     * @param {DateStrInput | Array<DateStrInput>} model
+     * @return {DateObjInput | Array<DateObjInput>}
+     */
+    prepareDatepickerInputValue (model) {
+      return _.isArray(model)
+        ? _.map(model, this.toDateObject)
+        : this.toDateObject(model)
+    },
+
+    /**
+     * @param {DateObjInput | Array<DateObjInput>} payload
+     * @return {DateStrInput | Array<DateStrInput>}
+     */
+    transformDatepickerOutputPayload (payload) {
+      if (_.isArray(payload)) {
+        let [ startDate, endDate ] = payload
+
+        // `el-date-picker` outputs range as [`<startDate> 00:00`, `<endDate> 00:00`]
+        // but we'd like [`<startDate> 00:00`, `<endDate> 23:59`]
+        // for the range to include the entirety of the last day
+        endDate = new Date(
+          endDate.getFullYear(),
+          endDate.getMonth(),
+          endDate.getDate() + 1,
+          0,
+          0,
+          0,
+          -1,
+        )
+
+        return _.map([ startDate, endDate ], this.toDateISOString)
+      }
+
+      return this.toDateISOString(payload)
+    },
+
+    /**
+     * @param {DateStrInput} dateISOstr
+     * @return {DateObjInput}
      */
     toDateObject (dateISOstr) {
       return _.isString(dateISOstr)
@@ -190,8 +238,8 @@ export default {
     },
 
     /**
-     * @param {Date | null | undefined} date
-     * @return {string | null | undefined}
+     * @param {DateObjInput} date
+     * @return {DateStrInput}
      */
     toDateISOString (date) {
       return _.isDate(date)

@@ -2,8 +2,11 @@ type TPropertyType = (
     'string' |
     'number' |
     'ref' |
+    'miltiref' |
     'enum' |
-    'datetime'
+    'multienum' |
+    'datetime' |
+    'daterange'
 )
 
 type TPropertyOptionDescription = string | Object
@@ -35,7 +38,6 @@ export default interface IPropertyBaseView {
 
     // enum, ref - controls
     optionsMap ?: IPropertyOptionsMap
-    multiple ?: boolean
     controlFormatter ?: (od: TPropertyOptionDescription) => string
     // enum, ref - columns
     tableFormatter ?: (row: Object, column: Object, value: any) => string,

@@ -295,11 +295,19 @@ function parseFilterRouterParam (filterString) {
 }
 
 /**
+ * `null`, `undefined`, empty strings, empty arrays, empty objects
+ * are meaningless for filtering
+ *
  * @param {*} value
  * @return {boolean}
  */
 function isMeaningfulFilterValue (value) {
-  return !([null, undefined, ''].includes(value))
+  if (
+    [null, undefined, ''].includes(value) ||
+    _.isEmpty(value)
+  ) return false
+
+  return true
 }
 
 /**
@@ -468,10 +476,13 @@ export default {
      * @return {IFormView}
      */
     filteringFormView () {
-      // TODO
       const filteringTypesMap = {
         'string': 'string',
-        'datetime': 'date-range',
+        'enum': 'multienum',
+        'multienum': 'multienum',
+        'ref': 'multiref',
+        'multiref': 'multiref',
+        'datetime': 'daterange',
       }
 
       const filteringFormProps = _.map(

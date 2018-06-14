@@ -60,6 +60,13 @@ export default {
   created () {
     this.intermediateModel = _.cloneDeep(this.$props.getFormDataTemplate())
 
+    // For Vue reactivity to work correctly make sure all props exist on the model
+    _.forEach(this.formView.fields, prop => {
+      if (!this.intermediateModel.hasOwnProperty(prop.name)) {
+        this.$set(this.intermediateModel, prop.name, undefined)
+      }
+    })
+
     EventBus.$emit('form-change', {
       formName: this.formView.name,
       model: this.intermediateModel,

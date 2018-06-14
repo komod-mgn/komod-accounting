@@ -19,14 +19,13 @@
         <div
           class="router-navigation"
         >
-          <span
+          <input
             v-if="isDev"
-            :style="{
-              marginRight: '10px',
-              color: 'white',
-            }"
-            v-text="$store.state.route.fullPath"
-          />
+            :value="decodedUrlFullPath"
+            :title="decodedUrlFullPath"
+            class="devAddressBar"
+            disabled
+          >
 
           <el-button-group>
             <el-button
@@ -92,6 +91,9 @@ export default {
     },
     isDev () {
       return process.env.NODE_ENV !== 'production'
+    },
+    decodedUrlFullPath () {
+      return decodeURIComponent(this.$store.state.route.fullPath)
     },
   },
 
@@ -171,6 +173,12 @@ export default {
     margin-right: 10px;
   }
 
+  .devAddressBar {
+    width: 400px;
+    margin-right: 10px;
+    white-space: pre;
+  }
+
   .action-panel {
     margin-bottom: 20px;
     flex: 0 0 auto;
@@ -185,7 +193,8 @@ export default {
   }
 
   .el-select,
-  .el-date-editor.el-input
+  .el-date-editor.el-input,
+  .el-date-editor.el-input__inner
   {
     width: 100%;
   }
@@ -215,7 +224,7 @@ export default {
     line-height: 20px;
   }
   .el-form-item__content {
-    flex-grow: 1;
+    flex: 1 1 0;
     margin-left: 0 !important;
   }
 </style>

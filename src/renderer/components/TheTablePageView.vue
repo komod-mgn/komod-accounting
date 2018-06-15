@@ -190,6 +190,7 @@
         @sort-change="changeSort"
       >
         <el-table-column
+          :index="(pageZeroBasedIdx) => (currentPage - 1) * tableRowsPerPage + pageZeroBasedIdx + 1"
           type="index"
           align="center"
           fixed="left"
@@ -239,10 +240,13 @@
     <el-pagination
       :current-page="currentPage"
       :page-size="tableRowsPerPage"
+      :page-sizes="[10, 20, 50, 100]"
       :total="configuredDataset.length"
+      layout="total, sizes, prev, pager, next, jumper"
       background
       class="paginator"
       @current-change="changePage"
+      @size-change="(newSize) => tableRowsPerPage = newSize"
     />
   </div>
 </template>

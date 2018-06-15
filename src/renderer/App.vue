@@ -209,6 +209,10 @@ export default {
     word-break: break-word;
   }
 
+  .el-pagination .el-select .el-input {
+    width: 140px;
+  }
+
   .el-dialog__body {
     padding: 20px;
   }

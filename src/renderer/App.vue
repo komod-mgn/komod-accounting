@@ -231,4 +231,9 @@ export default {
     flex: 1 1 0;
     margin-left: 0 !important;
   }
+
+  /* TODO temp fix, until element-ui 2.4.2 is released where it's fixed */
+  .el-button-group .el-button:first-child:last-child.is-round {
+    border-radius: 20px;
+  }
 </style>

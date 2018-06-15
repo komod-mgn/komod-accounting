@@ -4,6 +4,7 @@ process.env.BABEL_ENV = 'renderer'
 
 const path = require('path')
 const { dependencies } = require('../package.json')
+const { APP_NAME } = require('../src/config')
 const webpack = require('webpack')
 
 const BabiliWebpackPlugin = require('babili-webpack-plugin')
@@ -119,6 +120,7 @@ let rendererConfig = {
     new HtmlWebpackPlugin({
       filename: 'index.html',
       template: path.resolve(__dirname, '../src/index.ejs'),
+      title: APP_NAME,
       minify: {
         collapseWhitespace: true,
         removeAttributeQuotes: true,

@@ -7,13 +7,7 @@ import fse from 'fs-extra'
 //   commit as gitCommit,
 // } from './git'
 
-const path = require('path')
-const os = require('os')
-
-const APP_DIR_NAME = 'Комод - Учет'
-const APP_DIR_PATH = path.join(os.homedir(), APP_DIR_NAME)
-const APP_DB_NAME = 'db.json'
-const APP_DB_PATH = path.join(APP_DIR_PATH, APP_DB_NAME)
+const { APP_DIR_PATH, APP_DB_PATH } = require('../../config')
 
 let db
 

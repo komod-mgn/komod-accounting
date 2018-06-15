@@ -1,9 +1,8 @@
 {
   "name": "komod-accounting",
   "version": "0.0.0",
-  "author": "st-sloth <stsloth@protonmail.com>",
-  "description": "An electron-vue project",
-  "license": null,
+  "private": true,
+  "license": "ISC",
   "main": "./dist/electron/main.js",
   "scripts": {
     "build": "node .electron-vue/build.js && electron-builder -lw",
@@ -21,7 +20,7 @@
     "postinstall": "npm run lint:fix"
   },
   "build": {
-    "productName": "komod-accounting",
+    "productName": "Комод - Учет",
     "appId": "org.simulatedgreg.electron-vue",
     "directories": {
       "output": "build"

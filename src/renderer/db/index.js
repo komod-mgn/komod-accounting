@@ -2,10 +2,7 @@ import lowdb from 'lowdb'
 import LowdbFileAsync from 'lowdb/adapters/FileAsync'
 import fse from 'fs-extra'
 
-// import {
-//   prepare as gitPrepare,
-//   commit as gitCommit,
-// } from './git'
+import { createBackup, cleanUpBackupsFor } from './backups'
 
 const { APP_DIR_PATH, APP_DB_PATH } = require('../../config')
 
@@ -22,7 +19,9 @@ const whenDbReady = (async function prepareDb () {
   await db.defaults({})
     .write()
 
-  // await gitPrepare(APP_DIR_PATH)
+  await createBackup(APP_DB_PATH)
+
+  await cleanUpBackupsFor(APP_DB_PATH)
 })()
 
 /**
@@ -46,6 +45,4 @@ export async function dbUpdate (field, value) {
 
   await db.set(field, value)
     .write()
-
-  // await gitCommit()
 }

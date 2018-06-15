@@ -101,14 +101,14 @@ export default {
           name: 'itemsAmountCurrentSeason',
           label: 'Кол-во взятых вещей (сезон)',
           type: 'number',
-          minWidth: 120,
+          minWidth: 150,
           sortable: true,
         },
         {
           name: 'itemsAmountTotal',
           label: 'Кол-во взятых вещей (всего)',
           type: 'number',
-          minWidth: 120,
+          minWidth: 150,
           sortable: true,
         },
         {

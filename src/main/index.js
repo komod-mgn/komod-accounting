@@ -2,6 +2,12 @@
 
 import { app, BrowserWindow } from 'electron'
 
+// Install `electron-debug` with `devtron`
+require('electron-debug')({
+  enabled: true, // must be explicitly declared for devtools in production
+  showDevTools: false,
+})
+
 require('electron-context-menu')()
 
 /**

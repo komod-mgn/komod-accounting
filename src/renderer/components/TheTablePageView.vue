@@ -181,7 +181,7 @@
       Проверить после обновления ElementUI.
       -->
       <el-table
-        :data="currentPageSortedItemsWithComputedTableProps"
+        :data="currentPageConfiguredDatasetWithComputedTableProps"
         :row-key="'id'"
         :row-class-name="getRowClass"
         :max-height="tableMaxHeight"
@@ -239,7 +239,7 @@
     <el-pagination
       :current-page="currentPage"
       :page-size="tableRowsPerPage"
-      :total="items.length"
+      :total="configuredDataset.length"
       background
       class="paginator"
       @current-change="changePage"
@@ -382,10 +382,85 @@ export default {
       return this.$store.getters[`${this.storeModuleName}/itemsMap`]
     },
 
+    filteredItems () {
+      const datasetToFilter = this.items
+
+      if (!this.currentFilter) return datasetToFilter
+
+      /**
+       * @param {string} substring
+       * @return {RegExp}
+       */
+      function getStringMatchRegExp (substring) {
+        if (!getStringMatchRegExp._cache) {
+          getStringMatchRegExp._cache = {}
+        }
+        if (!getStringMatchRegExp._cache[substring]) {
+          getStringMatchRegExp._cache[substring] = new RegExp(substring, 'i')
+        }
+        return getStringMatchRegExp._cache[substring]
+      }
+
+      const filterablePropsMap = _.keyBy(this.filterableTableProperties, 'name')
+
+      const computedPropNamesMap = {}
+      this.itemComputedTableProperties.forEach(prop => {
+        computedPropNamesMap[prop.name] = true
+      })
+
+      return _.filter(datasetToFilter, item => {
+        // An item must comply with all filters
+        return _.every(this.currentFilter, (filterValue, filterField) => {
+          // Checking presence by `in` is faster (https://jsfiddle.net/stsloth/zytu4o1n/)
+          const itemFieldValue = filterField in computedPropNamesMap
+            ? this.getComputedPropertyValue(item, filterField)
+            : item[filterField]
+
+          const fieldType = filterablePropsMap[filterField].type
+
+          // `filterValue` is a case insensitive substring
+          if (fieldType === 'string') {
+            return getStringMatchRegExp(filterValue).test(itemFieldValue)
+          }
+
+          // `filterValue` is an array of possible values
+          if (
+            fieldType === 'enum' ||
+            fieldType === 'ref'
+          ) {
+            return filterValue.includes(itemFieldValue)
+          }
+
+          // `filterValue` is an array of possible values;
+          // `itemFieldValue` is also an array - matching any value
+          if (
+            fieldType === 'multienum' ||
+            fieldType === 'multiref'
+          ) {
+            return _.some(
+              itemFieldValue,
+              itemOneOfFieldVal => filterValue.includes(itemOneOfFieldVal),
+            )
+          }
+
+          // `filterValue` is a [ <startDate>, <endDate> ] array
+          if (fieldType === 'datetime') {
+            return filterValue[0] <= itemFieldValue && itemFieldValue <= filterValue[1]
+          }
+
+          // If didn't get handled - unknown filtration type
+          console.error(`'${fieldType}' is unknown filter type`)
+          return true
+        })
+      })
+    },
+
     sortedItems () {
+      const datasetToSort = this.filteredItems
+
       const { prop, order } = this.currentSort
 
-      if (!prop) return this.items
+      if (!prop) return datasetToSort
 
       if (this.isComputedProp(prop)) {
         // Computed props are not present in `items`,
@@ -397,22 +472,29 @@ export default {
         // with merged comp props and constantly spending >2x memory
         const calcPropItemsMap = {}
 
-        _.forEach(this.items, (item) => {
+        _.forEach(datasetToSort, (item) => {
           calcPropItemsMap[item.id] = this.getComputedPropertyValue(item, prop)
         })
 
         return _.orderBy(
-          this.items,
+          datasetToSort,
           [item => calcPropItemsMap[item.id]],
           [order === 'ascending' ? 'asc' : 'desc'],
         )
       }
 
       return _.orderBy(
-        this.items,
+        datasetToSort,
         [prop],
         [order === 'ascending' ? 'asc' : 'desc'],
       )
+    },
+
+    configuredDataset () {
+      // Sorted items are also filtered
+      // TODO move raw => configured dataset processing here
+      // with methods with params instead of computed props
+      return this.sortedItems
     },
 
     currentPage () {
@@ -429,10 +511,12 @@ export default {
       return parseFilterRouterParam(this.$store.state.route.query[QUERY_PARAM_FILTER])
     },
 
-    currentPageSortedItemsWithComputedTableProps () {
+    currentPageConfiguredDatasetWithComputedTableProps () {
+      const datasetToPage = this.configuredDataset
+
       const currentPageZeroBased = this.currentPage - 1
 
-      return _.chain(this.sortedItems)
+      return _.chain(datasetToPage)
         .slice(
           this.tableRowsPerPage * currentPageZeroBased,
           this.tableRowsPerPage * (currentPageZeroBased + 1),

@@ -128,6 +128,7 @@ export default {
   data () {
     return {
       datePickerOptions: {
+        firstDayOfWeek: 1,
         disabledDate (time) {
           return time.getTime() > Date.now()
         },

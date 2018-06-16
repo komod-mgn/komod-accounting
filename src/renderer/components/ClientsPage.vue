@@ -45,13 +45,6 @@ export default {
           sortable: true,
           filterable: true,
         },
-        // TODO нужно ли вообще отчество?
-        {
-          name: 'middleName',
-          label: 'Отчество',
-          type: 'string',
-          minWidth: 100,
-        },
         {
           name: 'status',
           label: 'Статус',

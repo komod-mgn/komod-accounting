@@ -25,7 +25,6 @@ export class KomodClient {
     this.id = null
     this.lastName = ''
     this.firstName = ''
-    this.middleName = ''
     /** @type {Array<KomodClientStatusEnumValue>} */
     this.status = []
     this.idDocument = ''

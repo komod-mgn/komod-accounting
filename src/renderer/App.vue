@@ -33,6 +33,7 @@
               round
               size="mini"
               icon="el-icon-arrow-left"
+              class="router-navigation__button"
               @click="goBack"
             />
             <el-button
@@ -40,6 +41,7 @@
               round
               size="mini"
               icon="el-icon-arrow-right"
+              class="router-navigation__button"
               @click="goForward"
             />
           </el-button-group>
@@ -144,7 +146,7 @@ export default {
   }
 
   #app__header {
-    --header-height: 40px;
+    --header-height: 32px;
 
     /* Override `el-header` `height` prop
     to only have the source of truth in CSS */
@@ -160,12 +162,17 @@ export default {
   #app__content {
     display: flex;
     flex-direction: column;
+    padding: 10px;
   }
 
   .router-navigation {
     height: var(--header-height);
     display: flex;
     align-items: center;
+  }
+
+  .router-navigation__button {
+    padding: 5px 10px !important;
   }
 
   .el-menu .router-navigation {
@@ -211,6 +218,11 @@ export default {
 
   .el-pagination .el-select .el-input {
     width: 140px;
+  }
+
+  .el-dialog {
+    margin-top: 5vh !important;
+    margin-bottom: 5vh !important;
   }
 
   .el-dialog__body {

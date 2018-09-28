@@ -5,7 +5,7 @@
   >
     <el-card
       :body-style="{
-        padding: '10px',
+        padding: '8px',
       }"
       class="action-panel"
     >
@@ -962,5 +962,9 @@ export default {
 
   .paginator {
     margin-top: 20px;
+  }
+
+  .el-button.is-round {
+    padding: 8px 15px;
   }
 </style>

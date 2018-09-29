@@ -29,6 +29,7 @@ export class KomodClient {
     this.status = []
     this.idDocument = ''
     this.phoneNumber = ''
+    this.comment = ''
 
     // So far hardcoded default
     this.seasonItemsLimit = 12

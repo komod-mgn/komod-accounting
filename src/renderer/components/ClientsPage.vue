@@ -79,6 +79,13 @@ export default {
           filterable: true,
         },
         {
+          name: 'comment',
+          label: 'Комментарий',
+          type: 'string',
+          minWidth: 100,
+          filterable: true,
+        },
+        {
           name: 'seasonItemsLimit',
           label: 'Норма на сезон',
           type: 'number',

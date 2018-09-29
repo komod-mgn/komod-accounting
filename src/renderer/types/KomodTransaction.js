@@ -10,5 +10,6 @@ export class KomodTransaction {
     this.date = (new Date()).toISOString()
     this.clientId = ''
     this.itemsAmount = 0
+    this.comment = ''
   }
 }

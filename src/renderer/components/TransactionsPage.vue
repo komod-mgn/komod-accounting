@@ -122,6 +122,13 @@ export default {
           ],
           sortable: true,
         },
+        {
+          name: 'comment',
+          label: 'Комментарий',
+          type: 'string',
+          minWidth: 100,
+          filterable: true,
+        },
       ],
 
       globalEventHandlers: {

@@ -86,7 +86,13 @@ export default {
               return self.clientsMap
             },
             controlFormatter: (obj) => {
-              return stringifyKomodClient(obj)
+              // Добавить в лейбл в контроле номер удостоверения,
+              // в том числе для возможности поиска в выпадающем списке по нему
+              const idDocPostfix = obj && obj.idDocument
+                ? ` (уд. ${obj.idDocument})`
+                : ''
+
+              return stringifyKomodClient(obj) + idDocPostfix
             },
             tableFormatter: (row, col, id) => {
               return stringifyKomodClient(this.clientsMap[id])

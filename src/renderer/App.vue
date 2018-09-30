@@ -208,6 +208,18 @@ export default {
     width: 100%;
   }
 
+  .el-date-picker .el-picker-panel__icon-btn,
+  .el-date-range-picker .el-picker-panel__icon-btn {
+    font-size: 15px;
+    margin-left: 3px;
+    margin-right: 3px;
+  }
+
+  .el-date-table td.in-range div,
+  .el-date-table td.in-range div:hover {
+    background-color: rgba(67, 158, 255, 0.35);
+  }
+
   .el-table__row {
     cursor: pointer;
   }

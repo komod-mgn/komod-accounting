@@ -1,4 +1,4 @@
-import IPropertyBaseView from "./IPropertyBaseView";
+import IPropertyBaseView from './IPropertyBaseView'
 
 export default interface ITablePageView {
     storeModuleName: string

@@ -291,30 +291,8 @@ export default {
   },
 
   props: {
-    /** @type {Array<IPropertyBaseView>} */
-    itemBaseProperties: {
-      type: Array,
-      required: true,
-    },
-
-    /** @type {Array<IPropertyBaseView>} */
-    itemComputedTableProperties: {
-      type: Array,
-      required: false,
-      default: () => [],
-    },
-
-    storeModuleName: {
-      type: String,
-      required: true,
-    },
-
-    routeName: {
-      type: String,
-      required: true,
-    },
-
-    defaultSort: {
+    /** @type {ITablePageView} */
+    view: {
       type: Object,
       required: true,
     },
@@ -347,10 +325,10 @@ export default {
 
   computed: {
     items () {
-      return this.$store.state[this.storeModuleName].items
+      return this.$store.state[this.view.storeModuleName].items
     },
     itemsMap () {
-      return this.$store.getters[`${this.storeModuleName}/itemsMap`]
+      return this.$store.getters[`${this.view.storeModuleName}/itemsMap`]
     },
 
     filteredItems () {
@@ -375,7 +353,7 @@ export default {
       const filterablePropsMap = _.keyBy(this.filterableTableProperties, 'name')
 
       const computedPropNamesMap = {}
-      this.itemComputedTableProperties.forEach(prop => {
+      this.view.itemComputedTableProperties.forEach(prop => {
         computedPropNamesMap[prop.name] = true
       })
 
@@ -492,7 +470,7 @@ export default {
           this.tableRowsPerPage * currentPageZeroBased,
           this.tableRowsPerPage * (currentPageZeroBased + 1),
         )
-        .map(item => this.getCloneWithComputedProps(item, this.itemComputedTableProperties))
+        .map(item => this.getCloneWithComputedProps(item, this.view.itemComputedTableProperties))
         .value()
     },
 
@@ -505,8 +483,8 @@ export default {
      */
     tableProperties () {
       return _.concat(
-        this.itemBaseProperties,
-        this.itemComputedTableProperties,
+        this.view.itemBaseProperties,
+        this.view.itemComputedTableProperties,
       )
     },
 
@@ -524,7 +502,7 @@ export default {
      * @return {Array<IPropertyBaseView>}
      */
     formProperties () {
-      return this.itemBaseProperties
+      return this.view.itemBaseProperties
     },
 
     /**
@@ -551,7 +529,7 @@ export default {
       )
 
       return {
-        name: `${this.storeModuleName}/filtering`,
+        name: `${this.view.storeModuleName}/filtering`,
         fields: filteringFormProps,
       }
     },
@@ -561,7 +539,7 @@ export default {
      */
     itemCreationFormView () {
       return {
-        name: `${this.storeModuleName}/creation`,
+        name: `${this.view.storeModuleName}/creation`,
         fields: this.formProperties,
       }
     },
@@ -571,7 +549,7 @@ export default {
      */
     itemEditingFormView () {
       return {
-        name: `${this.storeModuleName}/editing`,
+        name: `${this.view.storeModuleName}/editing`,
         fields: this.formProperties,
       }
     },
@@ -651,7 +629,7 @@ export default {
   created () {
     this.removeAfterEachRouterHook = this.$router.afterEach((to, from) => {
       // Игнорировать переходы на другие роуты
-      if (to.name === this.routeName) {
+      if (to.name === this.view.routeName) {
         this.ensureDefaultSort(to, from)
       }
     })
@@ -673,7 +651,7 @@ export default {
 
   methods: {
     isComputedProp (propName) {
-      return _.some(this.itemComputedTableProperties, compProp => compProp.name === propName)
+      return _.some(this.view.itemComputedTableProperties, compProp => compProp.name === propName)
     },
 
     calcSelectedItemPage () {
@@ -855,7 +833,7 @@ export default {
      */
     ensureDefaultSort (toRoute, fromRoute) {
       if (!toRoute.query[QUERY_PARAM_SORT]) {
-        let toSort = this.defaultSort
+        let toSort = this.view.defaultSort
 
         // Если переходим с дефолтной сортировки по убыванию
         // на "без сортировки", форсится снова дефолтная по убыванию.
@@ -917,7 +895,10 @@ export default {
     async submitItemCreationModal (acceptedItem) {
       this.isAsyncOpInProgress = true
 
-      await this.$store.dispatch(`${this.storeModuleName}/updateItem`, acceptedItem)
+      await this.$store.dispatch(
+        `${this.view.storeModuleName}/updateItem`,
+        acceptedItem,
+      )
 
       this.closeModal()
 
@@ -944,7 +925,10 @@ export default {
     async submitItemEditingModal (acceptedItem) {
       this.isAsyncOpInProgress = true
 
-      await this.$store.dispatch(`${this.storeModuleName}/updateItem`, acceptedItem)
+      await this.$store.dispatch(
+        `${this.view.storeModuleName}/updateItem`,
+        acceptedItem,
+      )
 
       this.closeModal()
 
@@ -960,7 +944,10 @@ export default {
 
       this.isAsyncOpInProgress = true
 
-      await this.$store.dispatch(`${this.storeModuleName}/deleteItem`, this.currentSelectedItem)
+      await this.$store.dispatch(
+        `${this.view.storeModuleName}/deleteItem`,
+        this.currentSelectedItem,
+      )
 
       this.$router.push({
         query: _.omit(this.$store.state.route.query, [

@@ -1,10 +1,7 @@
 <template>
   <the-table-page-view
-    :item-base-properties="itemBaseProperties"
+    :view="tablePageView"
     :get-item-creation-template-model="getItemCreationTemplateModel"
-    :store-module-name="storeModuleName"
-    :route-name="routeName"
-    :default-sort="defaultSort"
   >
     <template
       slot="creation-form-addon"
@@ -51,96 +48,100 @@ export default {
   },
 
   /**
-   * @return {ITablePageView}
+   * @return {{tablePageView: ITablePageView}}
    */
   data () {
     const self = this
 
     return {
-      storeModuleName: 'transactions',
-      routeName: ROUTE_NAME_TRANSACTIONS,
+      tablePageView: {
+        storeModuleName: 'transactions',
+        routeName: ROUTE_NAME_TRANSACTIONS,
 
-      defaultSort: {
-        prop: 'date',
-        order: 'descending',
-      },
-
-      itemBaseProperties: [
-        {
-          name: 'date',
-          label: 'Дата',
-          type: 'datetime',
-          validationRules: [
-            {
-              required: true,
-              trigger: ['blur', 'change'],
-              message: requiredFieldMessage,
-            },
-          ],
-          sortable: true,
-          filterable: true,
+        defaultSort: {
+          prop: 'date',
+          order: 'descending',
         },
-        {
-          name: 'clientId',
-          label: 'Клиент',
-          type: 'ref',
-          get optionsMap () {
-            return self.clientsMap
-          },
-          controlFormatter: (obj) => {
-            return stringifyKomodClient(obj)
-          },
-          tableFormatter: (row, col, id) => {
-            return stringifyKomodClient(this.clientsMap[id])
-          },
-          hrefModuleName: 'clients',
-          hrefQueryIdParam: QUERY_PARAM_ID,
-          filterable: true,
-          validationRules: [
-            {
-              required: true,
-              trigger: ['blur', 'change'],
-              message: requiredFieldMessage,
-            },
-          ],
-          // При изменении клиента нужно перевалидировать поле "Кол-во вещей",
-          // т.к. остаток от лимита у этого клиента может быть другой
-          triggerRevalidation: true,
-        },
-        {
-          name: 'itemsAmount',
-          label: 'Кол-во вещей',
-          type: 'number',
-          min: 0,
-          validationRules: [
-            {
-              validator (rule, fieldValue, callback, formModel) {
-                const seasonInfo = self.getClientSeasonItemsInfo(
-                  formModel.clientId,
-                  // При редактировании транзакции имеющееся "Взятое кол-во"
-                  // не должно учитываться во взятом за сезон
-                  formModel.id,
-                )
 
-                if (fieldValue > seasonInfo.remaining) {
-                  callback(new Error(takenItemsExcessMessage))
-                } else {
-                  callback()
-                }
+        itemBaseProperties: [
+          {
+            name: 'date',
+            label: 'Дата',
+            type: 'datetime',
+            validationRules: [
+              {
+                required: true,
+                trigger: ['blur', 'change'],
+                message: requiredFieldMessage,
               },
-              trigger: ['blur', 'change'],
+            ],
+            sortable: true,
+            filterable: true,
+          },
+          {
+            name: 'clientId',
+            label: 'Клиент',
+            type: 'ref',
+            get optionsMap () {
+              return self.clientsMap
             },
-          ],
-          sortable: true,
-        },
-        {
-          name: 'comment',
-          label: 'Комментарий',
-          type: 'string',
-          minWidth: 100,
-          filterable: true,
-        },
-      ],
+            controlFormatter: (obj) => {
+              return stringifyKomodClient(obj)
+            },
+            tableFormatter: (row, col, id) => {
+              return stringifyKomodClient(this.clientsMap[id])
+            },
+            hrefModuleName: 'clients',
+            hrefQueryIdParam: QUERY_PARAM_ID,
+            filterable: true,
+            validationRules: [
+              {
+                required: true,
+                trigger: ['blur', 'change'],
+                message: requiredFieldMessage,
+              },
+            ],
+            // При изменении клиента нужно перевалидировать поле "Кол-во вещей",
+            // т.к. остаток от лимита у этого клиента может быть другой
+            triggerRevalidation: true,
+          },
+          {
+            name: 'itemsAmount',
+            label: 'Кол-во вещей',
+            type: 'number',
+            min: 0,
+            validationRules: [
+              {
+                validator (rule, fieldValue, callback, formModel) {
+                  const seasonInfo = self.getClientSeasonItemsInfo(
+                    formModel.clientId,
+                    // При редактировании транзакции имеющееся "Взятое кол-во"
+                    // не должно учитываться во взятом за сезон
+                    formModel.id,
+                  )
+
+                  if (fieldValue > seasonInfo.remaining) {
+                    callback(new Error(takenItemsExcessMessage))
+                  } else {
+                    callback()
+                  }
+                },
+                trigger: ['blur', 'change'],
+              },
+            ],
+            sortable: true,
+          },
+          {
+            name: 'comment',
+            label: 'Комментарий',
+            type: 'string',
+            minWidth: 100,
+            filterable: true,
+          },
+        ],
+
+        itemComputedTableProperties: [],
+      },
 
       globalEventHandlers: {
         'form-change': this.handleItemFormChange.bind(this),

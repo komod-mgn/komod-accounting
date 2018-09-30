@@ -3,7 +3,10 @@ import Router from 'vue-router'
 
 Vue.use(Router)
 
-export default new Router({
+export const ROUTE_NAME_CLIENTS = 'clients-page'
+export const ROUTE_NAME_TRANSACTIONS = 'transactions-page'
+
+const router = new Router({
   routes: [
     {
       path: '/',
@@ -11,12 +14,12 @@ export default new Router({
     },
     {
       path: '/clients',
-      name: 'clients-page',
+      name: ROUTE_NAME_CLIENTS,
       component: require('@/components/ClientsPage').default,
     },
     {
       path: '/transactions',
-      name: 'transactions-page',
+      name: ROUTE_NAME_TRANSACTIONS,
       component: require('@/components/TransactionsPage').default,
     },
     {
@@ -25,3 +28,10 @@ export default new Router({
     },
   ],
 })
+
+// router.afterEach((to, from) => {
+//   console.debug('to', to)
+//   console.debug('from', from)
+// })
+
+export default router

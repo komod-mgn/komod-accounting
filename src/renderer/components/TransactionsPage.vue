@@ -3,6 +3,8 @@
     :item-base-properties="itemBaseProperties"
     :get-item-creation-template-model="getItemCreationTemplateModel"
     :store-module-name="storeModuleName"
+    :route-name="routeName"
+    :default-sort="defaultSort"
   >
     <template
       slot="creation-form-addon"
@@ -39,6 +41,7 @@ import TheTablePageView from '@/components/TheTablePageView'
 import EventBus from '@/EventBus'
 import { isDateInCurrentSeason } from '@/utils/date'
 import { requiredFieldMessage, takenItemsExcessMessage } from '@/utils/validation'
+import { ROUTE_NAME_TRANSACTIONS } from '@/router'
 
 export default {
   name: 'TransactionsPage',
@@ -47,13 +50,21 @@ export default {
     TheTablePageView,
   },
 
+  /**
+   * @return {ITablePageView}
+   */
   data () {
     const self = this
 
     return {
       storeModuleName: 'transactions',
+      routeName: ROUTE_NAME_TRANSACTIONS,
 
-      /** @type {Array<IPropertyBaseView>} */
+      defaultSort: {
+        prop: 'date',
+        order: 'descending',
+      },
+
       itemBaseProperties: [
         {
           name: 'date',

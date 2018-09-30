@@ -4,7 +4,9 @@
     :item-computed-table-properties="itemComputedTableProperties"
     :get-item-creation-template-model="getItemCreationTemplateModel"
     :get-computed-property-value="getComputedPropertyValue"
-    store-module-name="clients"
+    :store-module-name="storeModuleName"
+    :route-name="routeName"
+    :default-sort="defaultSort"
   />
 </template>
 
@@ -15,6 +17,7 @@ import { mapGetters } from 'vuex'
 import { KomodClient, KomodClientStatusEnum } from '@/types/KomodClient'
 import TheTablePageView from '@/components/TheTablePageView'
 import { requiredFieldMessage } from '@/utils/validation'
+import { ROUTE_NAME_CLIENTS } from '@/router'
 
 export default {
   name: 'ClientsPage',
@@ -23,9 +26,19 @@ export default {
     TheTablePageView,
   },
 
+  /**
+   * @return {ITablePageView}
+   */
   data () {
     return {
-      /** @type {Array<IPropertyBaseView>} */
+      storeModuleName: 'clients',
+      routeName: ROUTE_NAME_CLIENTS,
+
+      defaultSort: {
+        prop: 'lastName',
+        order: 'ascending',
+      },
+
       itemBaseProperties: [
         {
           name: 'lastName',
@@ -82,7 +95,7 @@ export default {
           name: 'comment',
           label: 'Комментарий',
           type: 'string',
-          minWidth: 100,
+          minWidth: 110,
           filterable: true,
         },
         {
@@ -95,7 +108,6 @@ export default {
         },
       ],
 
-      /** @type {Array<IPropertyBaseView>} */
       itemComputedTableProperties: [
         {
           name: 'itemsAmountCurrentSeason',

@@ -181,10 +181,12 @@
       Проверить после обновления ElementUI.
       -->
       <el-table
+        ref="table"
         :data="currentPageConfiguredDatasetWithComputedTableProps"
         :row-key="'id'"
         :row-class-name="getRowClass"
         :max-height="tableMaxHeight"
+        :default-sort="currentSort"
         border
         @row-click="selectItem"
         @sort-change="changeSort"
@@ -266,66 +268,19 @@ import {
 } from '@/router/table-view-constants'
 import BaseFormWithIntermediateModelAndEvents from '@/components/BaseFormWithIntermediateModelAndEvents'
 
+import {
+  formatSortRouterParam,
+  parseSortRouterParam,
+  formatFilterRouterParam,
+  parseFilterRouterParam,
+  isEmptyFilterModel,
+  isMeaningfulFilterValue,
+} from '@/utils/url'
+
 function noop () {}
 
 function getIdClass (id) {
   return `id--${id}`
-}
-
-const SORT_PARAMS_SEPARATOR = '-'
-
-function formatSortRouterParam ({ prop, order }) {
-  return prop + SORT_PARAMS_SEPARATOR + order
-}
-
-function parseSortRouterParam (sortString) {
-  // TODO make null and handle accordingly ?
-  if (!sortString) return {}
-
-  const [ prop, order ] = sortString.split(SORT_PARAMS_SEPARATOR)
-  return { prop, order }
-}
-
-function formatFilterRouterParam (filterModel) {
-  return JSON.stringify(filterModel)
-}
-
-function parseFilterRouterParam (filterString) {
-  if (!filterString) return null
-
-  const filterObj = JSON.parse(filterString)
-
-  return isEmptyFilterModel(filterObj) ? null : filterObj
-}
-
-/**
- * `null`, `undefined`, empty strings, empty arrays, empty objects
- * are meaningless for filtering
- *
- * @param {*} value
- * @return {boolean}
- */
-function isMeaningfulFilterValue (value) {
-  if (
-    [null, undefined, ''].includes(value) ||
-    _.isEmpty(value)
-  ) return false
-
-  return true
-}
-
-/**
- * Filter model is considered empty if it's not
- * an object with properties that contain meaningful values
- * @param {Object | null} filterModel
- * @return {boolean}
- */
-function isEmptyFilterModel (filterModel) {
-  return (
-    !_.isObject(filterModel) ||
-    _.isEmpty(filterModel) ||
-    _.every(filterModel, prop => !isMeaningfulFilterValue(prop))
-  )
 }
 
 export default {
@@ -354,6 +309,16 @@ export default {
       required: true,
     },
 
+    routeName: {
+      type: String,
+      required: true,
+    },
+
+    defaultSort: {
+      type: Object,
+      required: true,
+    },
+
     getItemCreationTemplateModel: {
       type: Function,
       required: true,
@@ -375,6 +340,8 @@ export default {
       calcTableMaxHeightBound: this.calcTableMaxHeight.bind(this),
 
       tableRowsPerPage: 10,
+
+      removeAfterEachRouterHook: noop(),
     }
   },
 
@@ -665,6 +632,31 @@ export default {
         })
       },
     },
+
+    currentSort (newVal, oldVal) {
+      if (!_.isEqual(newVal, oldVal)) {
+        // В ElTable нет пропа, контролирующего параметры сортировки
+        // (`default-sort` - только инициализирующий, а затем
+        // состояние параметоров изменяется только внутри),
+        // поэтому приходится вручную вызывать "сортировку" (которая
+        // меняет только отображение в заголовках колонок)
+        this.$refs.table.sort(
+          this.currentSort.prop,
+          this.currentSort.order,
+        )
+      }
+    },
+  },
+
+  created () {
+    this.removeAfterEachRouterHook = this.$router.afterEach((to, from) => {
+      // Игнорировать переходы на другие роуты
+      if (to.name === this.routeName) {
+        this.ensureDefaultSort(to, from)
+      }
+    })
+
+    this.ensureDefaultSort(this.$route)
   },
 
   mounted () {
@@ -674,6 +666,8 @@ export default {
   },
 
   beforeDestroy () {
+    this.removeAfterEachRouterHook()
+
     window.removeEventListener('resize', this.calcTableMaxHeightBound)
   },
 
@@ -853,6 +847,39 @@ export default {
       this.$router.push({
         query: _.omit(this.$store.state.route.query, QUERY_PARAM_MODAL),
       })
+    },
+
+    /**
+     * @param {Route} toRoute
+     * @param {Route} [fromRoute]
+     */
+    ensureDefaultSort (toRoute, fromRoute) {
+      if (!toRoute.query[QUERY_PARAM_SORT]) {
+        let toSort = this.defaultSort
+
+        // Если переходим с дефолтной сортировки по убыванию
+        // на "без сортировки", форсится снова дефолтная по убыванию.
+        // В таком случае меняем направление сортировки.
+        if (fromRoute) {
+          const fromSort = fromRoute.query[QUERY_PARAM_SORT]
+            ? parseSortRouterParam(fromRoute.query[QUERY_PARAM_SORT])
+            : {}
+
+          if (
+            _.isEqual(fromSort, toSort) &&
+            fromSort.order === 'descending'
+          ) {
+            toSort.order = 'ascending'
+          }
+        }
+
+        this.$router.replace({
+          query: {
+            ...toRoute.query,
+            [QUERY_PARAM_SORT]: formatSortRouterParam(toSort),
+          },
+        })
+      }
     },
 
     // --- Filtering ---

@@ -33,6 +33,7 @@
               round
               size="mini"
               icon="el-icon-arrow-left"
+              title="Вернуться назад"
               class="router-navigation__button"
               @click="goBack"
             />
@@ -41,6 +42,7 @@
               round
               size="mini"
               icon="el-icon-arrow-right"
+              title="Вернуться вперед"
               class="router-navigation__button"
               @click="goForward"
             />

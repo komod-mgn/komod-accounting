@@ -111,7 +111,7 @@ export default {
           name: 'itemsAmount',
           label: 'Кол-во вещей',
           type: 'number',
-          min: 1,
+          min: 0,
           validationRules: [
             {
               validator (rule, fieldValue, callback, formModel) {

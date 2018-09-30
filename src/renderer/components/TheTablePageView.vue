@@ -276,6 +276,7 @@ import {
   isEmptyFilterModel,
   isMeaningfulFilterValue,
 } from '@/utils/url'
+import { defaultDatetimeTableFormatter } from '@/utils/date'
 
 function noop () {}
 
@@ -788,17 +789,14 @@ export default {
     },
 
     /**
-     * @param {Object} row
-     * @param {Object} col
      * @param {*} value
+     * @param {Object} elUiCellScope
      * @param {IPropertyBaseView} fieldView
      * @return {string | *}
      */
-    defaultTableFormatter (row, col, value, fieldView) {
+    defaultTableFormatter ({ value, elUiCellScope, fieldView }) {
       switch (fieldView.type) {
-        case 'datetime': return value
-          ? (new Date(value)).toLocaleString('ru-RU')
-          : value
+        case 'datetime': return defaultDatetimeTableFormatter(value)
       }
 
       return value
@@ -807,19 +805,18 @@ export default {
     /**
      * http://element.eleme.io/#/en-US/component/table#custom-column-template
      *
-     * @param {{ row: Object, column: Object }} elUiRowScope
+     * @param {{ row: Object, column: Object, store: Object }} elUiCellScope
      * @param {IPropertyBaseView} fieldView
      * @return {string | *}
      */
-    formatCellText (elUiRowScope, fieldView) {
-      const value = elUiRowScope.row[fieldView.name]
+    formatCellText (elUiCellScope, fieldView) {
+      const value = elUiCellScope.row[fieldView.name]
 
-      return (fieldView.tableFormatter || this.defaultTableFormatter)(
-        elUiRowScope.row,
-        elUiRowScope.column,
+      return (fieldView.tableFormatter || this.defaultTableFormatter)({
         value,
+        elUiCellScope,
         fieldView,
-      )
+      })
     },
 
     closeModal () {

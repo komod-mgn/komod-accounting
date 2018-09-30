@@ -36,8 +36,15 @@ import { KomodTransaction } from '@/types/KomodTransaction'
 import { stringifyKomodClient } from '@/types/KomodClient'
 import TheTablePageView from '@/components/TheTablePageView'
 import EventBus from '@/EventBus'
-import { isDateInCurrentSeason } from '@/utils/date'
-import { requiredFieldMessage, takenItemsExcessMessage } from '@/utils/validation'
+import {
+  isDateInCurrentSeason,
+  defaultDatetimeTableFormatter,
+  repeatedDayDatetimeTableFormatter,
+} from '@/utils/date'
+import {
+  requiredFieldMessage,
+  takenItemsExcessMessage,
+} from '@/utils/validation'
 import { ROUTE_NAME_TRANSACTIONS } from '@/router'
 
 export default {
@@ -68,6 +75,32 @@ export default {
             name: 'date',
             label: 'Дата',
             type: 'datetime',
+            tableFormatter: ({ value, elUiCellScope, fieldView }) => {
+              // Для визуальной "группировки" строк одного и того же дня
+              // выводим полную дату только для строки, в которой день
+              // встречается первый раз на странице.
+              // Т.е. для первой строки, и для строк, день даты которых
+              // отличается от дня даты предыдущей строки.
+              // Для остальных выводим только время, отступая пробелами
+              // на ширину дневной части даты.
+
+              if (elUiCellScope.$index === 0) {
+                return defaultDatetimeTableFormatter(value)
+              }
+
+              if (elUiCellScope.$index > 0) {
+                const prevRowDate = new Date(
+                  elUiCellScope.store.states.data[elUiCellScope.$index - 1][fieldView.name]
+                )
+                const curRowDate = new Date(value)
+
+                if (curRowDate.toDateString() !== prevRowDate.toDateString()) {
+                  return defaultDatetimeTableFormatter(value)
+                }
+              }
+
+              return repeatedDayDatetimeTableFormatter(value)
+            },
             validationRules: [
               {
                 required: true,
@@ -94,8 +127,8 @@ export default {
 
               return stringifyKomodClient(obj) + idDocPostfix
             },
-            tableFormatter: (row, col, id) => {
-              return stringifyKomodClient(this.clientsMap[id])
+            tableFormatter: ({ value }) => {
+              return stringifyKomodClient(this.clientsMap[value])
             },
             hrefModuleName: 'clients',
             hrefQueryIdParam: QUERY_PARAM_ID,

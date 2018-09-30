@@ -40,7 +40,17 @@ export default interface IPropertyBaseView {
     optionsMap ?: IPropertyOptionsMap
     controlFormatter ?: (od: TPropertyOptionDescription) => string
     // enum, ref - columns
-    tableFormatter ?: (row: Object, column: Object, value: any) => string,
+    tableFormatter ?: (
+        {
+            value,
+            elUiCellScope,
+            fieldView,
+        } : {
+            value: any,
+            elUiCellScope: any, // todo найти тип
+            fieldView: IPropertyBaseView,
+        }
+    ) => string
     // ref - columns
     hrefModuleName ?: string
     hrefQueryIdParam ?: string

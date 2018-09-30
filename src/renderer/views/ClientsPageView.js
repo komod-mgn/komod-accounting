@@ -39,8 +39,8 @@ export default {
       type: 'multienum',
       minWidth: 150,
       optionsMap: KomodClientStatusEnum,
-      tableFormatter: (row, col, vals) => vals
-        .map(val => KomodClientStatusEnum[val])
+      tableFormatter: ({ value }) => value
+        .map(singleVal => KomodClientStatusEnum[singleVal])
         .join(', '),
       filterable: true,
       validationRules: [

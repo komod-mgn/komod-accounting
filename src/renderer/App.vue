@@ -228,6 +228,7 @@ export default {
   }
   .el-table .cell {
     word-break: break-word;
+    white-space: pre !important;
   }
 
   .el-pagination .el-select .el-input {

@@ -35,3 +35,19 @@ export function isDateInCurrentSeason (dateISO) {
 }
 
 const currentSeasonStartDateISO = getSeasonStartDateByDate(new Date()).toISOString()
+
+export function defaultDatetimeTableFormatter (value) {
+  return value
+    ? (new Date(value)).toLocaleString('ru-RU')
+    : value
+}
+
+export function repeatedDayDatetimeTableFormatter (value) {
+  return value
+    // Забиваем по ширине даты, которую не указываем,
+    // т.к. повторяется из предыдущей строки таблицы.
+    // Шрифт не моноширинный, поэтому не имеет особого смысла
+    // измерять количество символов для дня, и хардкодим визуально приемлемое.
+    ? '                    ' + (new Date(value)).toLocaleTimeString('ru-RU')
+    : value
+}

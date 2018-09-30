@@ -34,6 +34,7 @@
         :multiple="field.type === 'multienum'"
         :value="formData[field.name]"
         filterable
+        default-first-option
         @input="val => changeField(field, val)"
       >
         <el-option
@@ -50,6 +51,7 @@
         :value="formData[field.name]"
         clearable
         filterable
+        default-first-option
         @input="val => changeField(field, val)"
       >
         <el-option

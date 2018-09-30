@@ -15,12 +15,12 @@ const router = new Router({
     {
       path: '/clients',
       name: ROUTE_NAME_CLIENTS,
-      component: require('@/components/ClientsPage').default,
+      component: require('@/views/ClientsPage').default,
     },
     {
       path: '/transactions',
       name: ROUTE_NAME_TRANSACTIONS,
-      component: require('@/components/TransactionsPage').default,
+      component: require('@/views/TransactionsPage').default,
     },
     {
       path: '*',

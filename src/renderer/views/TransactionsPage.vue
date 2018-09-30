@@ -110,6 +110,9 @@ export default {
             // При изменении клиента нужно перевалидировать поле "Кол-во вещей",
             // т.к. остаток от лимита у этого клиента может быть другой
             triggerRevalidation: true,
+
+            // TODO раскостылить
+            addCreateClientHackButton: true,
           },
           {
             name: 'itemsAmount',

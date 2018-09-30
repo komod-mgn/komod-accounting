@@ -56,17 +56,25 @@ export default {
 
   actions: {
     async updateItem ({ state, commit }, item) {
+      let updatedItem
+
       if (item.id == null) {
-        commit('ADD', {
+        updatedItem = {
           ...item,
           id: nanoid(10), // https://alex7kom.github.io/nano-nanoid-cc/
-        })
+        }
+
+        commit('ADD', updatedItem)
       } else {
-        commit('EDIT', item)
+        updatedItem = item
+
+        commit('EDIT', updatedItem)
       }
 
       // sync db
       await dbUpdate('clients', state)
+
+      return updatedItem
     },
 
     async deleteItem ({ state, commit }, item) {

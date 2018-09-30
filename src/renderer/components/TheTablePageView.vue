@@ -523,6 +523,7 @@ export default {
         prop => ({
           ..._.omit(prop, [
             'validationRules',
+            'addCreateClientHackButton',
           ]),
           type: filteringTypesMap[prop.type],
         }),

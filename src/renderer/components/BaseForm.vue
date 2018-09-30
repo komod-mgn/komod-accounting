@@ -52,8 +52,16 @@
         clearable
         filterable
         default-first-option
+        class="ref-select"
         @input="val => changeField(field, val)"
       >
+        <create-client-hack-button
+          v-if="field.addCreateClientHackButton"
+          slot="prefix"
+          class="ref-select__create-btn"
+          @item-create="item => changeField(field, item.id)"
+        />
+
         <el-option
           v-for="(val, key) in field.optionsMap"
           :key="key"
@@ -104,6 +112,7 @@
 
 <script>
 import _ from 'lodash'
+import CreateClientHackButton from '@/components/CreateClientHackButton'
 
 const formName = 'form'
 
@@ -112,6 +121,10 @@ const formName = 'form'
 
 export default {
   name: 'BaseForm',
+
+  components: {
+    CreateClientHackButton,
+  },
 
   props: {
     formData: {
@@ -260,5 +273,10 @@ export default {
 </script>
 
 <style scoped>
+
+.ref-select /deep/ .el-input__prefix {
+  left: auto;
+  right: 40px;
+}
 
 </style>

@@ -14,7 +14,7 @@ export const KomodClientStatusEnum = {
   LOW_INCOME: 'Малоимущий',
   MANY_CHILDREN: 'Многодетная семья',
   SINGLE_CAREGIVER: 'Одинокий родитель (попечитель)',
-  DISABILITY: 'Особенности здоровья',
+  DISABILITY: 'Инвалид / Особенности здоровья',
   PENSIONER: 'Пенсионер',
   FIRE_VICTIM: 'Погорелец',
 }

@@ -150,6 +150,12 @@ export default {
     formName: () => formName,
   },
 
+  mounted () {
+    const firstInput = this.$el.querySelector('input')
+
+    if (firstInput) firstInput.focus()
+  },
+
   methods: {
     /**
      * @param {IPropertyBaseView} field

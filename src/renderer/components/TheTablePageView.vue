@@ -262,10 +262,6 @@ import {
   QUERY_PARAM_PAGE,
   QUERY_PARAM_SORT,
   QUERY_PARAM_FILTER,
-  QUERY_PARAM_MODAL,
-  QUERY_PARAM_MODAL_FILTER,
-  QUERY_PARAM_MODAL_CREATE,
-  QUERY_PARAM_MODAL_EDIT,
 } from '@/router/table-view-constants'
 import BaseFormWithIntermediateModelAndEvents from '@/components/BaseFormWithIntermediateModelAndEvents'
 
@@ -313,7 +309,11 @@ export default {
 
   data () {
     return {
+      isFilteringModalActive: false,
+      isItemCreationModalActive: false,
+      isItemEditingModalActive: false,
       isDeleteConfirmationVisible: false,
+
       isAsyncOpInProgress: false,
 
       tableMaxHeight: 10000,
@@ -556,25 +556,6 @@ export default {
         fields: this.formProperties,
       }
     },
-
-    isFilteringModalActive () {
-      return (
-        this.$store.state.route.query[QUERY_PARAM_MODAL] === QUERY_PARAM_MODAL_FILTER
-      )
-    },
-
-    isItemCreationModalActive () {
-      return (
-        this.$store.state.route.query[QUERY_PARAM_MODAL] === QUERY_PARAM_MODAL_CREATE
-      )
-    },
-
-    isItemEditingModalActive () {
-      return (
-        this.currentSelectedItem &&
-        this.$store.state.route.query[QUERY_PARAM_MODAL] === QUERY_PARAM_MODAL_EDIT
-      )
-    },
   },
 
   watch: {
@@ -786,7 +767,6 @@ export default {
         newLocation: {
           query: {
             ..._.omit(this.$store.state.route.query, [
-              QUERY_PARAM_MODAL,
               QUERY_PARAM_ID,
             ]),
             [QUERY_PARAM_PAGE]: newCurrentPage,
@@ -810,7 +790,6 @@ export default {
       const newLocationQuery = prop
         ? {
           ..._.omit(this.$store.state.route.query, [
-            QUERY_PARAM_MODAL,
             // QUERY_PARAM_ID, // при сортировке оставлять выбранным клиента
             QUERY_PARAM_PAGE,
           ]),
@@ -818,7 +797,6 @@ export default {
         }
         : {
           ..._.omit(this.$store.state.route.query, [
-            QUERY_PARAM_MODAL,
             // QUERY_PARAM_ID, // при сортировке оставлять выбранным клиента
             QUERY_PARAM_PAGE,
             QUERY_PARAM_SORT,
@@ -844,7 +822,6 @@ export default {
       const newLocationQuery = !isEmptyFilterModel(meaningfulFilter)
         ? {
           ..._.omit(this.$store.state.route.query, [
-            QUERY_PARAM_MODAL,
             QUERY_PARAM_ID,
             QUERY_PARAM_PAGE,
           ]),
@@ -852,7 +829,6 @@ export default {
         }
         : {
           ..._.omit(this.$store.state.route.query, [
-            QUERY_PARAM_MODAL,
             QUERY_PARAM_ID,
             QUERY_PARAM_PAGE,
             QUERY_PARAM_FILTER,
@@ -871,7 +847,7 @@ export default {
       this.updateRoute({
         newLocation: {
           query: {
-            ..._.omit(this.$store.state.route.query, QUERY_PARAM_MODAL),
+            ..._.omit(this.$store.state.route.query, []),
             [QUERY_PARAM_ID]: newSelectedItem.id,
           },
         },
@@ -926,10 +902,9 @@ export default {
     },
 
     closeModal () {
-      // TODO убрать модальность из роутера
-      this.$router.push({
-        query: _.omit(this.$store.state.route.query, QUERY_PARAM_MODAL),
-      })
+      this.isFilteringModalActive = false
+      this.isItemCreationModalActive = false
+      this.isItemEditingModalActive = false
     },
 
     // --- Filtering ---
@@ -938,12 +913,7 @@ export default {
       return this.currentFilter || {}
     },
     openFilteringModal () {
-      this.$router.push({
-        query: {
-          ...this.$store.state.route.query,
-          [QUERY_PARAM_MODAL]: QUERY_PARAM_MODAL_FILTER,
-        },
-      })
+      this.isFilteringModalActive = true
     },
     submitFilteringModal (filterModel) {
       this.closeModal()
@@ -957,12 +927,7 @@ export default {
     // --- Creation ---
 
     openItemCreationModal () {
-      this.$router.push({
-        query: {
-          ...this.$store.state.route.query,
-          [QUERY_PARAM_MODAL]: QUERY_PARAM_MODAL_CREATE,
-        },
-      })
+      this.isItemCreationModalActive = true
     },
     async submitItemCreationModal (acceptedItem) {
       this.isAsyncOpInProgress = true
@@ -987,12 +952,7 @@ export default {
         throw new Error('An item must be selected to be edited')
       }
 
-      this.$router.push({
-        query: {
-          ...this.$store.state.route.query,
-          [QUERY_PARAM_MODAL]: QUERY_PARAM_MODAL_EDIT,
-        },
-      })
+      this.isItemEditingModalActive = true
     },
     async submitItemEditingModal (acceptedItem) {
       this.isAsyncOpInProgress = true
@@ -1025,7 +985,6 @@ export default {
         newLocation: {
           query: _.omit(this.$store.state.route.query, [
             QUERY_PARAM_ID,
-            QUERY_PARAM_MODAL,
           ]),
         },
         replace: false,

@@ -37,6 +37,7 @@ export default interface IPropertyBaseView {
     max ?: number
 
     // enum, ref - controls
+    optionsArr ?: Array<{ key: string, value: any, label: string }>
     optionsMap ?: IPropertyOptionsMap
     controlFormatter ?: (od: TPropertyOptionDescription) => string
     // enum, ref - columns

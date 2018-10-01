@@ -60,6 +60,16 @@ export default {
   data () {
     const self = this
 
+    const clientIdRefFormatter = (client) => {
+      // Добавить в лейбл в контроле номер удостоверения,
+      // в том числе для возможности поиска в выпадающем списке по нему
+      const idDocPostfix = client && client.idDocument
+        ? ` (уд. ${client.idDocument})`
+        : ''
+
+      return stringifyKomodClient(client) + idDocPostfix
+    }
+
     return {
       tablePageView: {
         storeModuleName: 'transactions',
@@ -117,18 +127,19 @@ export default {
             name: 'clientId',
             label: 'Клиент',
             type: 'ref',
-            get optionsMap () {
-              return self.clientsMap
-            },
-            controlFormatter: (obj) => {
-              // Добавить в лейбл в контроле номер удостоверения,
-              // в том числе для возможности поиска в выпадающем списке по нему
-              const idDocPostfix = obj && obj.idDocument
-                ? ` (уд. ${obj.idDocument})`
-                : ''
+            get optionsArr () {
+              const clients = Object.values(self.clientsMap)
+                .map(client => ({
+                  key: client.id,
+                  value: client.id,
+                  label: clientIdRefFormatter(client),
+                }))
+                .sort((a, b) => a.label > b.label ? 1 : -1)
 
-              return stringifyKomodClient(obj) + idDocPostfix
+              return clients
             },
+            // Для `optionsArr` не используется
+            controlFormatter: clientIdRefFormatter,
             tableFormatter: ({ value }) => {
               return stringifyKomodClient(this.clientsMap[value])
             },

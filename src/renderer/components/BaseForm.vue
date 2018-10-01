@@ -62,12 +62,23 @@
           @item-create="item => changeField(field, item.id)"
         />
 
-        <el-option
-          v-for="(val, key) in field.optionsMap"
-          :key="key"
-          :label="field.controlFormatter(val)"
-          :value="key"
-        />
+        <template v-if="field.optionsArr">
+          <el-option
+            v-for="(option) in field.optionsArr"
+            :key="option.key"
+            :label="option.label"
+            :value="option.value"
+          />
+        </template>
+
+        <template v-else-if="field.optionsMap">
+          <el-option
+            v-for="(val, key) in field.optionsMap"
+            :key="key"
+            :label="field.controlFormatter(val)"
+            :value="key"
+          />
+        </template>
       </el-select>
 
       <!-- TODO make `picker-options` optional -->

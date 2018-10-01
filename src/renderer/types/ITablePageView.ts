@@ -4,6 +4,8 @@ export default interface ITablePageView {
     storeModuleName: string
     routeName: string
 
+    hideIndex ?: boolean
+
     defaultSort: {
         prop: string
         order: 'ascending' | 'descending'

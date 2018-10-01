@@ -192,6 +192,7 @@
         @sort-change="changeSort"
       >
         <el-table-column
+          v-if="!view.hideIndex"
           :index="(pageZeroBasedIdx) => (currentPage - 1) * tableRowsPerPage + pageZeroBasedIdx + 1"
           type="index"
           align="center"

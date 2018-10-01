@@ -65,6 +65,8 @@ export default {
         storeModuleName: 'transactions',
         routeName: ROUTE_NAME_TRANSACTIONS,
 
+        hideIndex: true,
+
         defaultSort: {
           prop: 'date',
           order: 'descending',

@@ -228,6 +228,8 @@ export default {
   }
   .el-table .cell {
     word-break: break-word;
+  }
+  .el-table .el-table__body .cell {
     white-space: pre !important;
   }
 

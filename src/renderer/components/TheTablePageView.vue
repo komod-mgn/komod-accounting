@@ -581,24 +581,7 @@ export default {
     currentSelectedItem: {
       immediate: true,
       handler (newVal) {
-        // If item is selected but page is unknown
-        if (newVal && !this.$store.state.route.query[QUERY_PARAM_PAGE]) {
-          const itemPage = this.calcSelectedItemPage()
-
-          if (itemPage !== null) {
-            this.$router.replace({
-              query: {
-                ...this.$store.state.route.query,
-                [QUERY_PARAM_PAGE]: itemPage,
-              },
-            })
-          }
-        }
-
-        // Watcher is first called before component is rendered,
-        // so have to wait until the row element exists and
-        // row is not yet de-selected
-        this.$nextTick(() => {
+        const centerSelectedRow = () => {
           if (newVal) {
             const rowEl = document.getElementsByClassName(getIdClass(newVal.id))[0]
             if (rowEl) {
@@ -610,7 +593,14 @@ export default {
               })
             }
           }
-        })
+        }
+
+        // В компоненте уже есть хук на изменение роута,
+        // в том числе текущего выбранного элемента,
+        // и там уже происходит связанная с этим
+        // коррекция страницы. Поэтому просто через
+        // таймаут центрируем строку.
+        this.$nextTick(centerSelectedRow)
       },
     },
 
@@ -619,8 +609,8 @@ export default {
         // В ElTable нет пропа, контролирующего параметры сортировки
         // (`default-sort` - только инициализирующий, а затем
         // состояние параметоров изменяется только внутри),
-        // поэтому приходится вручную вызывать "сортировку" (которая
-        // меняет только отображение в заголовках колонок)
+        // поэтому приходится вручную вызывать "сортировку"
+        // (которая меняет только отображение в заголовках колонок)
         this.$refs.table.sort(
           this.currentSort.prop,
           this.currentSort.order,
@@ -633,11 +623,21 @@ export default {
     this.removeAfterEachRouterHook = this.$router.afterEach((to, from) => {
       // Игнорировать переходы на другие роуты
       if (to.name === this.view.routeName) {
-        this.ensureDefaultSort(to, from)
+        // Исправить роут при необходимости, типа
+        // проставления дефолтных сортировок, если нет.
+        this.updateRoute({
+          newLocation: to,
+          oldLocation: from,
+          replace: true,
+        })
       }
     })
 
-    this.ensureDefaultSort(this.$route)
+    // Исправить роут при необходимости, типа
+    // проставления дефолтных сортировок, если нет.
+    this.updateRoute({
+      replace: true,
+    })
   },
 
   mounted () {
@@ -694,42 +694,145 @@ export default {
       return itemShallowClone
     },
 
+    /**
+     * Функция для "агрегации" в одном месте программных изменений роутера,
+     * для решения и отладки гонок изменения роута в разных местах
+     * @param {RawLocation} [newLocation]
+     * @param {RawLocation | Route} [oldLocation]
+     * @param {boolean} replace
+     * @return {Promise<void>}
+     */
+    async updateRoute ({ newLocation, oldLocation, replace }) {
+      const LOCATION_AND_ROUTE_RELEVANT_PROPS = ['path', 'params', 'query']
+
+      const currentRoute = this.$store.state.route
+
+      let adjustedNewLocation = _.cloneDeepWith(
+        newLocation || _.pick(currentRoute, LOCATION_AND_ROUTE_RELEVANT_PROPS),
+        // Попытка избавиться от реактивности Vue
+        // (иначе, при копировании из `currentRoute`,
+        // похоже, что при изменении `adjustedNewLocation.query`
+        // изменяется и `currentRoute.query`)
+        value => {
+          if (_.isArray(value)) return [ ...value ]
+          if (_.isObject(value)) return { ...value }
+          return value
+        }
+      )
+
+      // При отсутствии сортировки форсировать
+      // сортировку по умолчанию
+      if (!adjustedNewLocation.query[QUERY_PARAM_SORT]) {
+        let toSort = _.cloneDeep(this.view.defaultSort)
+
+        // Если переходим с дефолтной сортировки по убыванию
+        // на "без сортировки", форсится снова дефолтная по убыванию.
+        // В таком случае меняем направление сортировки.
+        if (oldLocation) {
+          const fromSort = oldLocation.query[QUERY_PARAM_SORT]
+            ? parseSortRouterParam(oldLocation.query[QUERY_PARAM_SORT])
+            : {}
+
+          if (
+            _.isEqual(fromSort, toSort) &&
+            fromSort.order === 'descending'
+          ) {
+            toSort.order = 'ascending'
+          }
+        }
+
+        adjustedNewLocation.query = {
+          ...adjustedNewLocation.query,
+          [QUERY_PARAM_SORT]: formatSortRouterParam(toSort),
+        }
+      }
+
+      if (isLocationEqualToRoute(adjustedNewLocation, currentRoute)) {
+        // noop
+      } else if (replace) {
+        this.$router.replace(adjustedNewLocation)
+      } else {
+        this.$router.push(adjustedNewLocation)
+      }
+
+      // При наличии выбранного элемента надо перейти на страницу,
+      // на которой этот элемент находится, с учетом примененных сортировок.
+      // Поэтому ожидаем завершения применения переходов.
+      if (this.currentSelectedItem) {
+        this.$nextTick(() => {
+          const itemPage = this.calcSelectedItemPage()
+
+          if (itemPage !== null) {
+            adjustedNewLocation.query = {
+              ...adjustedNewLocation.query,
+              [QUERY_PARAM_PAGE]: itemPage,
+            }
+
+            this.$router.replace(adjustedNewLocation)
+          }
+        })
+      }
+
+      function isLocationEqualToRoute (location, route) {
+        const strippedLocation = _.pick(location, LOCATION_AND_ROUTE_RELEVANT_PROPS)
+        const strippedRoute = _.pick(route, LOCATION_AND_ROUTE_RELEVANT_PROPS)
+
+        return _.isEqual(strippedLocation, strippedRoute)
+      }
+    },
+
     changePage (newCurrentPage) {
-      this.$router.push({
-        query: {
-          ..._.omit(this.$store.state.route.query, [
-            QUERY_PARAM_MODAL,
-            QUERY_PARAM_ID,
-          ]),
-          [QUERY_PARAM_PAGE]: newCurrentPage,
+      this.updateRoute({
+        newLocation: {
+          query: {
+            ..._.omit(this.$store.state.route.query, [
+              QUERY_PARAM_MODAL,
+              QUERY_PARAM_ID,
+            ]),
+            [QUERY_PARAM_PAGE]: newCurrentPage,
+          },
         },
+        replace: false,
       })
     },
 
     changeSort ({ prop, order }) {
-      if (prop) {
-        this.$router.push({
-          query: {
-            ..._.omit(this.$store.state.route.query, [
-              QUERY_PARAM_MODAL,
-              QUERY_PARAM_ID,
-              QUERY_PARAM_PAGE,
-            ]),
-            [QUERY_PARAM_SORT]: formatSortRouterParam({ prop, order }),
-          },
-        })
-      } else {
-        this.$router.push({
-          query: {
-            ..._.omit(this.$store.state.route.query, [
-              QUERY_PARAM_MODAL,
-              QUERY_PARAM_ID,
-              QUERY_PARAM_PAGE,
-              QUERY_PARAM_SORT,
-            ]),
-          },
-        })
+      // Если какими-то судьбами в ответ на изменение роута
+      // вызвалась эта функция и пытается просетить те же значения,
+      // ничего не делать
+      if (
+        prop &&
+        this.$store.state.route.query[QUERY_PARAM_SORT] === formatSortRouterParam({ prop, order })
+      ) {
+        return
       }
+
+      const newLocationQuery = prop
+        ? {
+          ..._.omit(this.$store.state.route.query, [
+            QUERY_PARAM_MODAL,
+            // QUERY_PARAM_ID, // при сортировке оставлять выбранным клиента
+            QUERY_PARAM_PAGE,
+          ]),
+          [QUERY_PARAM_SORT]: formatSortRouterParam({ prop, order }),
+        }
+        : {
+          ..._.omit(this.$store.state.route.query, [
+            QUERY_PARAM_MODAL,
+            // QUERY_PARAM_ID, // при сортировке оставлять выбранным клиента
+            QUERY_PARAM_PAGE,
+            QUERY_PARAM_SORT,
+          ]),
+        }
+
+      this.updateRoute({
+        newLocation: {
+          query: newLocationQuery,
+        },
+        // Для обработки "текущей" сортировки, с которой уходим
+        oldLocation: this.$store.state.route,
+        replace: false,
+      })
     },
 
     changeFilter (filterModel) {
@@ -738,39 +841,41 @@ export default {
         prop => !isMeaningfulFilterValue(prop)
       )
 
-      if (
-        !isEmptyFilterModel(meaningfulFilter)
-      ) {
-        this.$router.push({
-          query: {
-            ..._.omit(this.$store.state.route.query, [
-              QUERY_PARAM_MODAL,
-              QUERY_PARAM_ID,
-              QUERY_PARAM_PAGE,
-            ]),
-            [QUERY_PARAM_FILTER]: formatFilterRouterParam(meaningfulFilter),
-          },
-        })
-      } else {
-        this.$router.push({
-          query: {
-            ..._.omit(this.$store.state.route.query, [
-              QUERY_PARAM_MODAL,
-              QUERY_PARAM_ID,
-              QUERY_PARAM_PAGE,
-              QUERY_PARAM_FILTER,
-            ]),
-          },
-        })
-      }
+      const newLocationQuery = !isEmptyFilterModel(meaningfulFilter)
+        ? {
+          ..._.omit(this.$store.state.route.query, [
+            QUERY_PARAM_MODAL,
+            QUERY_PARAM_ID,
+            QUERY_PARAM_PAGE,
+          ]),
+          [QUERY_PARAM_FILTER]: formatFilterRouterParam(meaningfulFilter),
+        }
+        : {
+          ..._.omit(this.$store.state.route.query, [
+            QUERY_PARAM_MODAL,
+            QUERY_PARAM_ID,
+            QUERY_PARAM_PAGE,
+            QUERY_PARAM_FILTER,
+          ]),
+        }
+
+      this.updateRoute({
+        newLocation: {
+          query: newLocationQuery,
+        },
+        replace: false,
+      })
     },
 
     selectItem (newSelectedItem) {
-      this.$router.push({
-        query: {
-          ..._.omit(this.$store.state.route.query, QUERY_PARAM_MODAL),
-          [QUERY_PARAM_ID]: newSelectedItem.id,
+      this.updateRoute({
+        newLocation: {
+          query: {
+            ..._.omit(this.$store.state.route.query, QUERY_PARAM_MODAL),
+            [QUERY_PARAM_ID]: newSelectedItem.id,
+          },
         },
+        replace: false,
       })
     },
 
@@ -821,42 +926,10 @@ export default {
     },
 
     closeModal () {
+      // TODO убрать модальность из роутера
       this.$router.push({
         query: _.omit(this.$store.state.route.query, QUERY_PARAM_MODAL),
       })
-    },
-
-    /**
-     * @param {Route} toRoute
-     * @param {Route} [fromRoute]
-     */
-    ensureDefaultSort (toRoute, fromRoute) {
-      if (!toRoute.query[QUERY_PARAM_SORT]) {
-        let toSort = this.view.defaultSort
-
-        // Если переходим с дефолтной сортировки по убыванию
-        // на "без сортировки", форсится снова дефолтная по убыванию.
-        // В таком случае меняем направление сортировки.
-        if (fromRoute) {
-          const fromSort = fromRoute.query[QUERY_PARAM_SORT]
-            ? parseSortRouterParam(fromRoute.query[QUERY_PARAM_SORT])
-            : {}
-
-          if (
-            _.isEqual(fromSort, toSort) &&
-            fromSort.order === 'descending'
-          ) {
-            toSort.order = 'ascending'
-          }
-        }
-
-        this.$router.replace({
-          query: {
-            ...toRoute.query,
-            [QUERY_PARAM_SORT]: formatSortRouterParam(toSort),
-          },
-        })
-      }
     },
 
     // --- Filtering ---
@@ -948,11 +1021,14 @@ export default {
         this.currentSelectedItem,
       )
 
-      this.$router.push({
-        query: _.omit(this.$store.state.route.query, [
-          QUERY_PARAM_ID,
-          QUERY_PARAM_MODAL,
-        ]),
+      this.updateRoute({
+        newLocation: {
+          query: _.omit(this.$store.state.route.query, [
+            QUERY_PARAM_ID,
+            QUERY_PARAM_MODAL,
+          ]),
+        },
+        replace: false,
       })
 
       this.isAsyncOpInProgress = false

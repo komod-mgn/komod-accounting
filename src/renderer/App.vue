@@ -240,6 +240,7 @@ export default {
   .el-dialog {
     margin-top: 5vh !important;
     margin-bottom: 5vh !important;
+    min-width: 700px;
   }
 
   .el-dialog__body {

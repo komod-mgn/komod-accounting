@@ -235,7 +235,7 @@ export default {
     handleItemFormChange ({ formName, model }) {
       // Add message to the form about how many items
       // current transaction can have based on client's limit and history
-      if (formName === `${this.storeModuleName}/creation`) {
+      if (formName === `${this.tablePageView.storeModuleName}/creation`) {
         // Client is unset or not yet set
         if (!model.clientId) {
           this.creationFormAddonMessage = ''
@@ -247,7 +247,7 @@ export default {
 
         this.creationFormAddonMessage =
           `У выбранного клиента осталось ${seasonInfo.remaining} вещей из ${seasonInfo.limit}`
-      } else if (formName === `${this.storeModuleName}/editing`) {
+      } else if (formName === `${this.tablePageView.storeModuleName}/editing`) {
         // Client is unset or not yet set
         if (!model.clientId) {
           this.editingFormAddonMessage = ''

@@ -183,7 +183,10 @@ export default {
                     formModel.id,
                   )
 
-                  if (fieldValue > seasonInfo.remaining) {
+                  if (
+                    isDateInCurrentSeason(formModel.date) &&
+                    fieldValue > seasonInfo.remaining
+                  ) {
                     callback(new Error(takenItemsExcessMessage))
                   } else {
                     callback()
@@ -281,10 +284,15 @@ export default {
           return
         }
 
-        const seasonInfo = this.getClientSeasonItemsInfo(model.clientId, model.id)
+        if (isDateInCurrentSeason(model.date)) {
+          const seasonInfo = this.getClientSeasonItemsInfo(model.clientId, model.id)
 
-        this.creationFormAddonMessage =
-          `У выбранного клиента осталось ${seasonInfo.remaining} вещей из ${seasonInfo.limit}`
+          this.creationFormAddonMessage =
+            `У выбранного клиента осталось ${seasonInfo.remaining} вещей из ${seasonInfo.limit}`
+        } else {
+          this.creationFormAddonMessage =
+            'Расчет и проверка доступного количества вещей на сезон доступны только для текущего сезона'
+        }
       } else if (formName === `${this.tablePageView.storeModuleName}/editing`) {
         // Client is unset or not yet set
         if (!model.clientId) {
@@ -299,10 +307,15 @@ export default {
           return
         }
 
-        const seasonInfo = this.getClientSeasonItemsInfo(model.clientId, model.id)
+        if (isDateInCurrentSeason(model.date)) {
+          const seasonInfo = this.getClientSeasonItemsInfo(model.clientId, model.id)
 
-        this.editingFormAddonMessage =
-          `У выбранного клиента осталось ${seasonInfo.remaining} вещей из ${seasonInfo.limit}`
+          this.editingFormAddonMessage =
+            `У выбранного клиента осталось ${seasonInfo.remaining} вещей из ${seasonInfo.limit}`
+        } else {
+          this.editingFormAddonMessage =
+            'Расчет и проверка доступного количества вещей на сезон доступны только для текущего сезона'
+        }
       }
     },
 

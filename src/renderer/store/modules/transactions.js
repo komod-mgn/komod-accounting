@@ -25,9 +25,13 @@ import { dbUpdate } from '@/db'
  * @param {KomodTransaction} item
  */
 function putTransactionIdInSortedArray (state, item) {
-  const targetIdx = state.transactionIdsSortedDateDesc.findIndex(
+  let targetIdx = state.transactionIdsSortedDateDesc.findIndex(
     id => state.transactions[id].date < item.date
   )
+
+  if (targetIdx === -1) {
+    targetIdx = state.transactionIdsSortedDateDesc.length
+  }
 
   state.transactionIdsSortedDateDesc.splice(targetIdx, 0, item.id)
 }
@@ -37,10 +41,13 @@ function putTransactionIdInSortedArray (state, item) {
  * @param {KomodTransaction} item
  */
 function removeTransactionIdFromSortedArray (state, item) {
-  state.transactionIdsSortedDateDesc.splice(
-    state.transactionIdsSortedDateDesc.findIndex(id => id === item.id),
-    1,
-  )
+  const targetIdx = state.transactionIdsSortedDateDesc.findIndex(id => id === item.id)
+
+  if (targetIdx === -1) {
+    throw new Error('Transaction id is not found in the sorted array and cannot be removed')
+  }
+
+  state.transactionIdsSortedDateDesc.splice(targetIdx, 1)
 }
 
 export default {

@@ -23,9 +23,13 @@ import { dbUpdate } from '@/db'
  * @param {KomodClient} item
  */
 function putClientIdInSortedArray (state, item) {
-  const targetIdx = state.clientIdsSortedLastNameAsc.findIndex(
+  let targetIdx = state.clientIdsSortedLastNameAsc.findIndex(
     id => state.clients[id].lastName > item.lastName
   )
+
+  if (targetIdx === -1) {
+    targetIdx = state.clientIdsSortedLastNameAsc.length
+  }
 
   state.clientIdsSortedLastNameAsc.splice(targetIdx, 0, item.id)
 }
@@ -35,10 +39,13 @@ function putClientIdInSortedArray (state, item) {
  * @param {KomodClient} item
  */
 function removeClientIdFromSortedArray (state, item) {
-  state.clientIdsSortedLastNameAsc.splice(
-    state.clientIdsSortedLastNameAsc.findIndex(id => id === item.id),
-    1,
-  )
+  const targetIdx = state.clientIdsSortedLastNameAsc.findIndex(id => id === item.id)
+
+  if (targetIdx === -1) {
+    throw new Error('Client id is not found in the sorted array and cannot be removed')
+  }
+
+  state.clientIdsSortedLastNameAsc.splice(targetIdx, 1)
 }
 
 export default {

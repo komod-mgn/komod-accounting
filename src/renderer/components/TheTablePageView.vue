@@ -327,10 +327,18 @@ export default {
 
   computed: {
     items () {
-      return this.$store.state[this.view.storeModuleName].items
+      if (this.view.storeModuleName === 'clients') {
+        return this.$store.getters[`${this.view.storeModuleName}/clientsSortedLastNameAsc`]
+      }
+      if (this.view.storeModuleName === 'transactions') {
+        return this.$store.getters[`${this.view.storeModuleName}/transactionsSortedDateDesc`]
+      }
+
+      return []
     },
     itemsMap () {
-      return this.$store.getters[`${this.view.storeModuleName}/itemsMap`]
+      // Модуль с одноименной коллекцией внутри
+      return this.$store.state[this.view.storeModuleName][this.view.storeModuleName]
     },
 
     filteredItems () {

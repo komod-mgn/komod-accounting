@@ -1,45 +1,91 @@
 import nanoid from 'nanoid'
 import _ from 'lodash'
+import Vue from 'vue'
 
 import { updateVuexState } from '@/utils'
 import { isDateInCurrentSeason } from '@/utils/date'
 import { dbUpdate } from '@/db'
 
+/**
+ * @typedef {Object} TransactionsModuleState
+ *
+ * @property {Object<string, KomodTransaction>} transactions - Объект с идентификаторами в качестве ключей
+ * @property {Array<string>} transactionIdsSortedDateDesc - Список идентификаторов,
+ *    ОТСОРТИРОВАННЫЙ ПО УБЫВАНИЮ (УСТАРЕВАНИЮ) ДАТ.
+ *
+ *    Решено использовать состояние, поддерживаемое
+ *    самостоятельно, чем иметь геттер, который выполняет
+ *    пересчет каждый раз, когда меняются его зависимости,
+ *    что с увеличением количества объектов со временем
+ *    будет только ещё больше деградировать.
+ */
+
+/**
+ * @param {TransactionsModuleState} state
+ * @param {KomodTransaction} item
+ */
+function putTransactionIdInSortedArray (state, item) {
+  const targetIdx = state.transactionIdsSortedDateDesc.findIndex(
+    id => state.transactions[id].date < item.date
+  )
+
+  state.transactionIdsSortedDateDesc.splice(targetIdx, 0, item.id)
+}
+
+/**
+ * @param {TransactionsModuleState} state
+ * @param {KomodTransaction} item
+ */
+function removeTransactionIdFromSortedArray (state, item) {
+  state.transactionIdsSortedDateDesc.splice(
+    state.transactionIdsSortedDateDesc.findIndex(id => id === item.id),
+    1,
+  )
+}
+
 export default {
 
   namespaced: true,
 
+  /**
+   * @type {TransactionsModuleState}
+   */
   state: {
-    /** @type {Array<KomodTransaction>} */
-    items: [],
+    transactions: {},
+    transactionIdsSortedDateDesc: [],
   },
 
   getters: {
     /**
-     * @param {Object} state
-     * @return {Object<string, KomodTransaction>}
+     * @param {TransactionsModuleState} state
+     * @return {Array<KomodTransaction>}
      */
-    itemsMap (state) {
-      return _.keyBy(state.items, 'id')
+    transactionsSortedDateDesc (state) {
+      return state.transactionIdsSortedDateDesc.map(id => state.transactions[id])
     },
 
-    // todo optimize !!! heavy calculations on any transaction change
-    itemsMapByClientSortedByDateDesc (state) {
-      const itemsMapByClient = _.groupBy(
-        state.items,
+    /**
+     * @param {TransactionsModuleState} state
+     * @param getters
+     * @return {Dictionary<Array<KomodTransaction>>}
+     */
+    transactionsByClientSortedDateDesc (state, getters) {
+      const transactionsByClient = _.groupBy(
+        getters.transactionsSortedDateDesc,
         'clientId',
       )
 
-      return _.mapValues(
-        itemsMapByClient,
-        items => _.orderBy(items, ['date'], ['desc'])
-      )
+      return transactionsByClient
     },
 
-    // todo optimize !!! heavy calculations on any transaction change
+    /**
+     * @param {TransactionsModuleState} state
+     * @param getters
+     * @return {Dictionary<number>}
+     */
     currentSeasonItemsAmountByClient (state, getters) {
       return _.mapValues(
-        getters.itemsMapByClientSortedByDateDesc,
+        getters.transactionsByClientSortedDateDesc,
         transactions => {
           let sum = 0
 
@@ -66,47 +112,95 @@ export default {
       updateVuexState(state, newState)
     },
 
+    /**
+     * @param {TransactionsModuleState} state
+     * @param {KomodTransaction} item
+     */
     ADD (state, item) {
-      state.items.push(item)
+      const existingItem = state.transactions[item.id]
+
+      if (existingItem) {
+        throw new Error('Adding existing transaction')
+      }
+
+      Vue.set(state.transactions, item.id, item)
+
+      putTransactionIdInSortedArray(state, item)
     },
 
+    /**
+     * @param {TransactionsModuleState} state
+     * @param {KomodTransaction} item
+     */
     EDIT (state, item) {
-      const existingItem = state.items.find(i => i.id === item.id)
+      const existingItem = state.transactions[item.id]
 
       if (!existingItem) {
         throw new Error('Editing non-existent transaction')
       }
 
-      // TODO state.items.splice ?
-      Object.assign(existingItem, item)
+      Vue.set(state.transactions, item.id, item)
+
+      // При изменении даты нужно переместить `id` в отсортированном массиве
+      if (item.date !== existingItem.date) {
+        removeTransactionIdFromSortedArray(state, existingItem)
+
+        putTransactionIdInSortedArray(state, item)
+      }
     },
 
+    /**
+     * @param {TransactionsModuleState} state
+     * @param {KomodTransaction} item
+     */
     DELETE (state, item) {
-      const itemIdx = state.items.findIndex(i => i.id === item.id)
+      const existingItem = state.transactions[item.id]
 
-      if (itemIdx === -1) {
-        throw new Error('Deleting non-existent client')
+      if (!existingItem) {
+        throw new Error('Deleting non-existent transaction')
       }
 
-      state.items.splice(itemIdx, 1)
+      removeTransactionIdFromSortedArray(state, existingItem)
+
+      Vue.delete(state.transactions, item.id)
     },
   },
 
   actions: {
+    /**
+     * @param {TransactionsModuleState} state
+     * @param {Function} commit
+     * @param {KomodTransaction} item
+     * @return {Promise<KomodTransaction>}
+     */
     async updateItem ({ state, commit }, item) {
+      let updatedItem
+
       if (item.id == null) {
-        commit('ADD', {
+        updatedItem = {
           ...item,
           id: nanoid(10), // https://alex7kom.github.io/nano-nanoid-cc/
-        })
+        }
+
+        commit('ADD', updatedItem)
       } else {
-        commit('EDIT', item)
+        updatedItem = item
+
+        commit('EDIT', updatedItem)
       }
 
       // sync db
       await dbUpdate('transactions', state)
+
+      return updatedItem
     },
 
+    /**
+     * @param {TransactionsModuleState} state
+     * @param {Function} commit
+     * @param {KomodTransaction} item
+     * @return {Promise<void>}
+     */
     async deleteItem ({ state, commit }, item) {
       commit('DELETE', item)
 

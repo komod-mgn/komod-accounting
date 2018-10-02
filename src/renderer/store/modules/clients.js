@@ -1,25 +1,65 @@
 import nanoid from 'nanoid'
-import _ from 'lodash'
+import Vue from 'vue'
 
 import { updateVuexState } from '@/utils'
 import { dbUpdate } from '@/db'
+
+/**
+ * @typedef {Object} ClientsModuleState
+ *
+ * @property {Object<string, KomodClient>} clients - Объект с идентификаторами в качестве ключей
+ * @property {Array<string>} clientIdsSortedLastNameAsc - Список идентификаторов,
+ *    ОТСОРТИРОВАННЫЙ ПО ВОЗРАСТАНИЮ ФАМИЛИЙ.
+ *
+ *    Решено использовать состояние, поддерживаемое
+ *    самостоятельно, чем иметь геттер, который выполняет
+ *    пересчет каждый раз, когда меняются его зависимости,
+ *    что с увеличением количества объектов со временем
+ *    будет только ещё больше деградировать.
+ */
+
+/**
+ * @param {ClientsModuleState} state
+ * @param {KomodClient} item
+ */
+function putClientIdInSortedArray (state, item) {
+  const targetIdx = state.clientIdsSortedLastNameAsc.findIndex(
+    id => state.clients[id].lastName > item.lastName
+  )
+
+  state.clientIdsSortedLastNameAsc.splice(targetIdx, 0, item.id)
+}
+
+/**
+ * @param {ClientsModuleState} state
+ * @param {KomodClient} item
+ */
+function removeClientIdFromSortedArray (state, item) {
+  state.clientIdsSortedLastNameAsc.splice(
+    state.clientIdsSortedLastNameAsc.findIndex(id => id === item.id),
+    1,
+  )
+}
 
 export default {
 
   namespaced: true,
 
+  /**
+   * @type {ClientsModuleState}
+   */
   state: {
-    /** @type {Array<KomodClient>} */
-    items: [],
+    clients: {},
+    clientIdsSortedLastNameAsc: [],
   },
 
   getters: {
     /**
-     * @param {Object} state
-     * @return {Object<string, KomodClient>}
+     * @param {ClientsModuleState} state
+     * @return {Array<KomodClient>}
      */
-    itemsMap (state) {
-      return _.keyBy(state.items, 'id')
+    clientsSortedLastNameAsc (state) {
+      return state.clientIdsSortedLastNameAsc.map(id => state.clients[id])
     },
   },
 
@@ -28,33 +68,67 @@ export default {
       updateVuexState(state, newState)
     },
 
+    /**
+     * @param {ClientsModuleState} state
+     * @param {KomodClient} item
+     */
     ADD (state, item) {
-      state.items.push(item)
+      const existingItem = state.clients[item.id]
+
+      if (existingItem) {
+        throw new Error('Adding existing client')
+      }
+
+      Vue.set(state.clients, item.id, item)
+
+      putClientIdInSortedArray(state, item)
     },
 
+    /**
+     * @param {ClientsModuleState} state
+     * @param {KomodClient} item
+     */
     EDIT (state, item) {
-      const existingItem = state.items.find(i => i.id === item.id)
+      const existingItem = state.clients[item.id]
 
       if (!existingItem) {
         throw new Error('Editing non-existent client')
       }
 
-      // TODO state.items.splice ?
-      Object.assign(existingItem, item)
+      Vue.set(state.clients, item.id, item)
+
+      // При изменении фамилии нужно переместить `id` в отсортированном массиве
+      if (item.lastName !== existingItem.lastName) {
+        removeClientIdFromSortedArray(state, existingItem)
+
+        putClientIdInSortedArray(state, item)
+      }
     },
 
+    /**
+     * @param {ClientsModuleState} state
+     * @param {KomodClient} item
+     */
     DELETE (state, item) {
-      const itemIdx = state.items.findIndex(i => i.id === item.id)
+      const existingItem = state.clients[item.id]
 
-      if (itemIdx === -1) {
+      if (!existingItem) {
         throw new Error('Deleting non-existent client')
       }
 
-      state.items.splice(itemIdx, 1)
+      removeClientIdFromSortedArray(state, existingItem)
+
+      Vue.delete(state.clients, item.id)
     },
   },
 
   actions: {
+    /**
+     * @param {ClientsModuleState} state
+     * @param {Function} commit
+     * @param {KomodClient} item
+     * @return {Promise<KomodClient>}
+     */
     async updateItem ({ state, commit }, item) {
       let updatedItem
 
@@ -77,6 +151,12 @@ export default {
       return updatedItem
     },
 
+    /**
+     * @param {ClientsModuleState} state
+     * @param {Function} commit
+     * @param {KomodClient} item
+     * @return {Promise<void>}
+     */
     async deleteItem ({ state, commit }, item) {
       commit('DELETE', item)
 

@@ -33,7 +33,7 @@ export default {
   computed: {
     ...mapGetters({
       currentSeasonItemsAmountByClient: 'transactions/currentSeasonItemsAmountByClient',
-      transactionsMapByClientSortedByDateDesc: 'transactions/itemsMapByClientSortedByDateDesc',
+      transactionsByClientSortedDateDesc: 'transactions/transactionsByClientSortedDateDesc',
     }),
   },
 
@@ -49,12 +49,12 @@ export default {
 
         case 'itemsAmountTotal':
           return _.sumBy(
-            this.transactionsMapByClientSortedByDateDesc[item.id],
+            this.transactionsByClientSortedDateDesc[item.id],
             'itemsAmount',
           )
 
         case 'lastTransactionDate':
-          const clientTransactions = this.transactionsMapByClientSortedByDateDesc[item.id]
+          const clientTransactions = this.transactionsByClientSortedDateDesc[item.id]
           const lastTransaction = clientTransactions ? clientTransactions[0] : null
           return lastTransaction
             ? lastTransaction.date

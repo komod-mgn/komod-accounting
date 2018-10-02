@@ -27,7 +27,10 @@
 
 <script>
 import _ from 'lodash'
-import { mapGetters } from 'vuex'
+import {
+  mapState,
+  mapGetters,
+} from 'vuex'
 
 import {
   QUERY_PARAM_ID,
@@ -128,20 +131,19 @@ export default {
             label: 'Клиент',
             type: 'ref',
             get optionsArr () {
-              const clients = Object.values(self.clientsMap)
+              const clients = Object.values(self.clientsSortedLastNameAsc)
                 .map(client => ({
                   key: client.id,
                   value: client.id,
                   label: clientIdRefFormatter(client),
                 }))
-                .sort((a, b) => a.label > b.label ? 1 : -1)
 
               return clients
             },
             // Для `optionsArr` не используется
             controlFormatter: clientIdRefFormatter,
             tableFormatter: ({ value }) => {
-              return stringifyKomodClient(this.clientsMap[value])
+              return stringifyKomodClient(this.clients[value])
             },
             hrefModuleName: 'clients',
             hrefQueryIdParam: QUERY_PARAM_ID,
@@ -208,9 +210,13 @@ export default {
   },
 
   computed: {
+    ...mapState({
+      // Модули с одноименными словарями внутри
+      transactions: state => state.transactions.transactions,
+      clients: state => state.clients.clients,
+    }),
     ...mapGetters({
-      clientsMap: 'clients/itemsMap',
-      transactionsMap: 'transactions/itemsMap',
+      clientsSortedLastNameAsc: 'clients/clientsSortedLastNameAsc',
       currentSeasonItemsAmountByClient: 'transactions/currentSeasonItemsAmountByClient',
     }),
   },
@@ -255,7 +261,7 @@ export default {
           return
         }
 
-        if (model.clientId && !this.clientsMap[model.clientId]) {
+        if (model.clientId && !this.clients[model.clientId]) {
           this.editingFormAddonMessage = 'Выбранный клиент был удален из базы данных'
 
           return
@@ -274,8 +280,8 @@ export default {
      * @return {{limit: number, remaining: number}}
      */
     getClientSeasonItemsInfo (clientId, editedTransactionId) {
-      const limit = this.clientsMap[clientId]
-        ? this.clientsMap[clientId].seasonItemsLimit
+      const limit = this.clients[clientId]
+        ? this.clients[clientId].seasonItemsLimit
         : 0
 
       let taken = this.currentSeasonItemsAmountByClient[clientId] || 0
@@ -285,7 +291,7 @@ export default {
       // Для UI и валидации, схожими с созданием транзакции,
       // сделаем "Осталось" без учета текущего значения
       if (editedTransactionId) {
-        const editedTransaction = this.transactionsMap[editedTransactionId]
+        const editedTransaction = this.transactions[editedTransactionId]
 
         if (editedTransaction && isDateInCurrentSeason(editedTransaction.date)) {
           taken -= editedTransaction.itemsAmount

@@ -1,3 +1,5 @@
+import _ from 'lodash'
+
 export default {
 
   '2' (data) {
@@ -15,6 +17,28 @@ export default {
       data.transactions.items.forEach(item => {
         item.comment = ''
       })
+    }
+
+    return data
+  },
+
+  '4' (data) {
+    if (data.clients) {
+      data.clients = {
+        clients: _.keyBy(data.clients.items, 'id'),
+        clientIdsSortedLastNameAsc: _.orderBy(
+          data.clients.items, 'lastName', 'asc'
+        ).map(item => item.id),
+      }
+    }
+
+    if (data.transactions) {
+      data.transactions = {
+        transactions: _.keyBy(data.transactions.items, 'id'),
+        transactionIdsSortedDateDesc: _.orderBy(
+          data.transactions.items, 'date', 'desc'
+        ).map(item => item.id),
+      }
     }
 
     return data

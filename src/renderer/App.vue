@@ -213,11 +213,26 @@ export default {
     font-size: 15px;
     margin-left: 3px;
     margin-right: 3px;
+    padding-left: 15px;
+    padding-right: 15px;
   }
 
   .el-date-table td.in-range div,
   .el-date-table td.in-range div:hover {
     background-color: rgba(67, 158, 255, 0.35);
+  }
+
+  /*
+  Скрывать стрелки для перехода по годам в режиме дней
+  - `.el-date-picker__header--bordered` применяется в остальных, но не в нем
+  - в range переключения между режимами в данный момент нет, поэтому фактически скрываем всегда
+  */
+  .el-date-picker__header:not(.el-date-picker__header--bordered) .el-icon-d-arrow-left,
+  .el-date-picker__header:not(.el-date-picker__header--bordered) .el-icon-d-arrow-right,
+  .el-date-range-picker__header:not(.el-date-range-picker__header--bordered) .el-icon-d-arrow-left,
+  .el-date-range-picker__header:not(.el-date-range-picker__header--bordered) .el-icon-d-arrow-right
+  {
+    display: none;
   }
 
   .el-table__row {

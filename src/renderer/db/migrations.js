@@ -44,4 +44,16 @@ export default {
     return data
   },
 
+  '5' (data) {
+    if (data.clients) {
+      _.forEach(data.clients.clients, client => {
+        client.status = client.status.map(singleStatus => {
+          return singleStatus === 'ORPHAN' ? 'ADULT_ORPHAN' : singleStatus
+        })
+      })
+    }
+
+    return data
+  },
+
 }

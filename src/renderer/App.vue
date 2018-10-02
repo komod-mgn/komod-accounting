@@ -49,12 +49,12 @@
           </el-button-group>
         </div>
 
-        <el-menu-item index="/clients">
-          Клиенты
+        <el-menu-item index="/transactions">
+          Журнал
         </el-menu-item>
 
-        <el-menu-item index="/transactions">
-          Транзакции
+        <el-menu-item index="/clients">
+          Клиенты
         </el-menu-item>
 
       </el-menu>

@@ -10,7 +10,7 @@ const router = new Router({
   routes: [
     {
       path: '/',
-      redirect: '/clients',
+      redirect: '/transactions',
     },
     {
       path: '/clients',

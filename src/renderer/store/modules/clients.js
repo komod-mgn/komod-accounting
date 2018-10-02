@@ -7,7 +7,7 @@ import { dbUpdate } from '@/db'
 /**
  * @typedef {Object} ClientsModuleState
  *
- * @property {Object<string, KomodClient>} clients - Объект с идентификаторами в качестве ключей
+ * @property {Dictionary<KomodClient>} clients - Объект с идентификаторами в качестве ключей
  * @property {Array<string>} clientIdsSortedLastNameAsc - Список идентификаторов,
  *    ОТСОРТИРОВАННЫЙ ПО ВОЗРАСТАНИЮ ФАМИЛИЙ.
  *

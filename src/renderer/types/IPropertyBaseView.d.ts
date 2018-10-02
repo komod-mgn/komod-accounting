@@ -21,8 +21,10 @@ export default interface IPropertyBaseView {
     type : TPropertyType
 
     // Columns
+    width ?: number
     minWidth ?: number
     fixedToSide ?: 'left' | 'right'
+    align ?: 'left' | 'center' | 'right'
     sortable ?: boolean
     filterable ?: boolean
 

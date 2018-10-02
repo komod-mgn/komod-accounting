@@ -206,7 +206,9 @@
           :prop="field.name"
           :label="field.label"
           :fixed="field.fixedToSide"
+          :width="field.width"
           :min-width="field.minWidth"
+          :align="field.align || 'left'"
           :sortable="field.sortable ? 'custom' : false"
           :default-sort="currentSort"
           header-align="center"
@@ -492,10 +494,18 @@ export default {
      * @return {Array<IPropertyBaseView>}
      */
     tableProperties () {
-      return _.concat(
+      const allProps = _.concat(
         this.view.itemBaseProperties,
         this.view.itemComputedTableProperties,
       )
+
+      if (this.view.customTablePropertiesOrder) {
+        const allPropsByName = _.keyBy(allProps, 'name')
+
+        return this.view.customTablePropertiesOrder.map(name => allPropsByName[name])
+      }
+
+      return allProps
     },
 
     /**

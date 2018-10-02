@@ -2,6 +2,7 @@
   <the-table-page-view
     :view="tablePageView"
     :get-item-creation-template-model="getItemCreationTemplateModel"
+    :get-computed-property-value="getComputedPropertyValue"
   >
     <template
       slot="creation-form-addon"
@@ -197,7 +198,25 @@ export default {
           },
         ],
 
-        itemComputedTableProperties: [],
+        itemComputedTableProperties: [
+          {
+            name: 'dayOrderNumber',
+            label: '#',
+            type: 'number',
+            width: 60,
+            align: 'center',
+            sortable: false,
+            filterable: false,
+          },
+        ],
+
+        customTablePropertiesOrder: [
+          'dayOrderNumber',
+          'date',
+          'clientId',
+          'itemsAmount',
+          'comment',
+        ],
       },
 
       globalEventHandlers: {
@@ -218,6 +237,7 @@ export default {
     ...mapGetters({
       clientsSortedLastNameAsc: 'clients/clientsSortedLastNameAsc',
       currentSeasonItemsAmountByClient: 'transactions/currentSeasonItemsAmountByClient',
+      dayOrderNumbersByTransaction: 'transactions/dayOrderNumbersByTransaction',
     }),
   },
 
@@ -236,6 +256,13 @@ export default {
   methods: {
     getItemCreationTemplateModel () {
       return new KomodTransaction()
+    },
+
+    getComputedPropertyValue (item, property) {
+      switch (property) {
+        case 'dayOrderNumber':
+          return this.dayOrderNumbersByTransaction[item.id]
+      }
     },
 
     handleItemFormChange ({ formName, model }) {

@@ -13,4 +13,8 @@ export default interface ITablePageView {
 
     itemBaseProperties: Array<IPropertyBaseView>
     itemComputedTableProperties: Array<IPropertyBaseView>
+
+    // Если нужно кастомно задавать порядок, например,
+    // вычисляемые свойства не после реальных, а перед / между
+    customTablePropertiesOrder ?: Array<string>
 }

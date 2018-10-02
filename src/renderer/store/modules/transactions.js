@@ -9,7 +9,7 @@ import { dbUpdate } from '@/db'
 /**
  * @typedef {Object} TransactionsModuleState
  *
- * @property {Object<string, KomodTransaction>} transactions - Объект с идентификаторами в качестве ключей
+ * @property {Dictionary<KomodTransaction>} transactions - Объект с идентификаторами в качестве ключей
  * @property {Array<string>} transactionIdsSortedDateDesc - Список идентификаторов,
  *    ОТСОРТИРОВАННЫЙ ПО УБЫВАНИЮ (УСТАРЕВАНИЮ) ДАТ.
  *
@@ -104,6 +104,37 @@ export default {
           return sum
         }
       )
+    },
+
+    /**
+     * @param {TransactionsModuleState} state
+     * @param getters
+     * @return {Dictionary<number>}
+     */
+    dayOrderNumbersByTransaction (state, getters) {
+      const resultMap = {}
+
+      let lastProcessedDay = ''
+      let currentDay
+      let currentDayCounter
+
+      let arr = getters.transactionsSortedDateDesc
+
+      // Идем с конца, т.к. сортировано от новых к старым,
+      // а нужно идти от старых к новым
+      _.forEachRight(arr, (transaction) => {
+        currentDay = new Date(transaction.date).toDateString()
+
+        currentDayCounter = currentDay === lastProcessedDay
+          ? currentDayCounter + 1
+          : 1
+
+        resultMap[transaction.id] = currentDayCounter
+
+        lastProcessedDay = currentDay
+      })
+
+      return resultMap
     },
   },
 

@@ -170,6 +170,11 @@ export default {
             min: 0,
             validationRules: [
               {
+                required: true,
+                trigger: ['blur', 'change'],
+                message: requiredFieldMessage,
+              },
+              {
                 validator (rule, fieldValue, callback, formModel) {
                   const seasonInfo = self.getClientSeasonItemsInfo(
                     formModel.clientId,

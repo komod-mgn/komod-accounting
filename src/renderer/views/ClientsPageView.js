@@ -80,6 +80,13 @@ export default {
       minWidth: 90,
       min: 1,
       sortable: true,
+      validationRules: [
+        {
+          required: true,
+          trigger: ['blur', 'change'],
+          message: requiredFieldMessage,
+        },
+      ],
     },
   ],
 

@@ -22,6 +22,7 @@
   "build": {
     "productName": "Комод - Учет",
     "appId": "org.simulatedgreg.electron-vue",
+    "artifactName": "${productName} ${version} ${os} ${arch}.${ext}",
     "directories": {
       "output": "build"
     },

@@ -792,6 +792,8 @@ export default {
         },
         replace: false,
       })
+
+      this.$refs.table.$refs.bodyWrapper.scrollTop = 0
     },
 
     changeSort ({ prop, order }) {

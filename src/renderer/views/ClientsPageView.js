@@ -70,7 +70,7 @@ export default {
       name: 'comment',
       label: 'Комментарий',
       type: 'string',
-      minWidth: 110,
+      minWidth: 120,
       filterable: true,
     },
     {
@@ -109,7 +109,7 @@ export default {
       name: 'lastTransactionDate',
       label: 'Последнее посещение',
       type: 'datetime',
-      minWidth: 220,
+      minWidth: 170,
       sortable: true,
       filterable: true,
     },

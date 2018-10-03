@@ -5,7 +5,7 @@
   >
     <el-card
       :body-style="{
-        padding: '8px',
+        padding: '6px',
       }"
       class="action-panel"
     >
@@ -321,7 +321,7 @@ export default {
       tableMaxHeight: 10000,
       calcTableMaxHeightBound: this.calcTableMaxHeight.bind(this),
 
-      tableRowsPerPage: 10,
+      tableRowsPerPage: 20,
 
       removeAfterEachRouterHook: noop(),
     }
@@ -1027,10 +1027,10 @@ export default {
   }
 
   .paginator {
-    margin-top: 20px;
+    margin-top: 10px;
   }
 
   .el-button.is-round {
-    padding: 8px 15px;
+    padding: 5px 12px;
   }
 </style>

@@ -189,7 +189,7 @@ export default {
   }
 
   .action-panel {
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     flex: 0 0 auto;
   }
   .action-panel__item + .action-panel__item {
@@ -246,6 +246,24 @@ export default {
   }
   .el-table .el-table__body .cell {
     white-space: pre !important;
+  }
+  .el-table th {
+    padding: 4px 0;
+  }
+  .el-table td {
+    padding: 6px 0;
+  }
+  .el-table .caret-wrapper {
+    height: 20px;
+  }
+  .el-table .caret-wrapper {
+    height: 20px;
+  }
+  .el-table .sort-caret.ascending {
+    top: -1px;
+  }
+  .el-table .sort-caret.descending {
+    bottom: -1px;
   }
 
   .el-pagination .el-select .el-input {

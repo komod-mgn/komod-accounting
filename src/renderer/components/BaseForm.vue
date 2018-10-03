@@ -167,7 +167,28 @@ export default {
       const rules = {}
 
       this.formView.fields.forEach(field => {
-        rules[field.name] = field.validationRules
+        rules[field.name] = field.validationRules && field.validationRules
+          // Оборачивание валидатора из вьюхи,
+          // предоставляя ему всю модель из формы
+          // для каких-то контекстно-зависимых проверок.
+          // Принять ПР с добавлением передачи модели
+          // в валидатор мейнтейнеры element-ui отказались
+          .map(sourceRule => {
+            const modifiedRule = { ...sourceRule }
+
+            if (sourceRule.validator) {
+              // Валидатор для element-ui
+              modifiedRule.validator = (rule, fieldValue, callback) => {
+                // Валидатор из вьюхи с моделью в 4 аргументе
+                return sourceRule.validator(rule, fieldValue, callback, {
+                  ...this.formData,
+                  [field.name]: fieldValue,
+                })
+              }
+            }
+
+            return modifiedRule
+          })
       })
 
       return rules

@@ -225,6 +225,12 @@ export default {
           'itemsAmount',
           'comment',
         ],
+
+        customFilterPropertiesOrder: [
+          'clientId',
+          'date',
+          'comment',
+        ],
       },
 
       globalEventHandlers: {

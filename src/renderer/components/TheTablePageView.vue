@@ -500,9 +500,9 @@ export default {
       )
 
       if (this.view.customTablePropertiesOrder) {
-        const allPropsByName = _.keyBy(allProps, 'name')
+        const propsByName = _.keyBy(allProps, 'name')
 
-        return this.view.customTablePropertiesOrder.map(name => allPropsByName[name])
+        return this.view.customTablePropertiesOrder.map(name => propsByName[name])
       }
 
       return allProps
@@ -512,10 +512,18 @@ export default {
      * @return {Array<IPropertyBaseView>}
      */
     filterableTableProperties () {
-      return _.filter(
+      const filterableProps = _.filter(
         this.tableProperties,
         prop => prop.filterable,
       )
+
+      if (this.view.customFilterPropertiesOrder) {
+        const propsByName = _.keyBy(filterableProps, 'name')
+
+        return this.view.customFilterPropertiesOrder.map(name => propsByName[name])
+      }
+
+      return filterableProps
     },
 
     /**

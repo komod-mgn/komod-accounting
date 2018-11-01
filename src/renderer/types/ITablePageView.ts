@@ -17,4 +17,5 @@ export default interface ITablePageView {
     // Если нужно кастомно задавать порядок, например,
     // вычисляемые свойства не после реальных, а перед / между
     customTablePropertiesOrder ?: Array<string>
+    customFilterPropertiesOrder ?: Array<string>
 }

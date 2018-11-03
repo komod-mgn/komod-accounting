@@ -208,6 +208,11 @@ export default {
     width: 100%;
   }
 
+  .el-select .el-select__caret {
+    color: dimgray !important;
+    font-weight: bold;
+  }
+
   .el-date-picker .el-picker-panel__icon-btn,
   .el-date-range-picker .el-picker-panel__icon-btn {
     font-size: 15px;

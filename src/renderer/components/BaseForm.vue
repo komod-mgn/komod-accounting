@@ -33,11 +33,12 @@
 
       <el-select
         v-if="field.type === 'enum' || field.type === 'multienum'"
+        :ref="getFieldRefName(field)"
         :multiple="field.type === 'multienum'"
         :value="formData[field.name]"
         filterable
         default-first-option
-        @input="val => changeField(field, val)"
+        @input="val => handleSelectInput(field, val)"
       >
         <el-option
           v-for="(label, key) in field.optionsMap"
@@ -49,13 +50,14 @@
 
       <el-select
         v-if="field.type === 'ref' || field.type === 'multiref'"
+        :ref="getFieldRefName(field)"
         :multiple="field.type === 'multiref'"
         :value="formData[field.name]"
         clearable
         filterable
         default-first-option
         class="ref-select"
-        @input="val => changeField(field, val)"
+        @input="val => handleSelectInput(field, val)"
         @filter-change="val => $set(selectSearches, field.name, val)"
       >
         <create-client-hack-button
@@ -376,6 +378,42 @@ export default {
       // </закрытие пикера>
 
       this.changeField(field, this.transformDatepickerOutputPayload(value))
+    },
+
+    /**
+     * @param {IPropertyBaseView} field
+     * @param {*} value
+     */
+    handleSelectInput (field, value) {
+      // <закрытие дропдауна>
+      // (выполнять до обновления значения, т.к. имеются проверки по старому значению)
+      if (
+        field.type === 'multienum' ||
+        field.type === 'multiref'
+      ) {
+        // В селекте с множественным выбором дропдаун остается открытым после выбора элементов.
+        // В контексте использования проще в редких случаях при необоходимости переоткрыть,
+        // чем постоянно закрывать руками.
+
+        let selectComponent = this.getRef(field)
+
+        const newValue = value || []
+        const oldValue = this.formData[field.name] || []
+
+        // Закрываем только если было выбрано новое значение
+        // (а при снятии выделения оставлять)
+        if (newValue.length > oldValue.length) {
+          // Откладывание необходимо, вероятно,
+          // из-за изменения значения ниже в `changeField`
+          // (без этого не закрывается)
+          this.$nextTick(() => {
+            selectComponent.handleClose()
+          })
+        }
+      }
+      // </закрытие дропдауна>
+
+      this.changeField(field, value)
     },
   },
 }

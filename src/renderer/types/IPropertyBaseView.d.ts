@@ -2,7 +2,7 @@ type TPropertyType = (
     'string' |
     'number' |
     'ref' |
-    'miltiref' |
+    'multiref' |
     'enum' |
     'multienum' |
     'datetime' |

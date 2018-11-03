@@ -1,6 +1,6 @@
 <template>
   <el-form
-    :ref="formName"
+    :ref="formRefName"
     :model="formData"
     :rules="fieldRules"
     label-width="150px"
@@ -22,11 +22,13 @@
 
       <el-input-number
         v-if="field.type === 'number'"
+        :ref="getFieldRefName(field)"
         :value="formData[field.name]"
         :min="field.min"
         :max="field.max"
         controls-position="right"
         @input="val => changeField(field, val)"
+        @focus="handleNumberInputFocus(field)"
       />
 
       <el-select
@@ -127,7 +129,8 @@
 import _ from 'lodash'
 import CreateClientHackButton from '@/components/CreateClientHackButton'
 
-const formName = 'form'
+const formRefName = 'formRefName'
+const fieldRefPrefix = 'fieldRef__'
 
 /** @typedef {Date | null | undefined} DateObjInput */
 /** @typedef {string | null | undefined} DateStrInput */
@@ -197,7 +200,7 @@ export default {
       return rules
     },
 
-    formName: () => formName,
+    formRefName: () => formRefName,
   },
 
   mounted () {
@@ -228,11 +231,19 @@ export default {
           // immediately emits `[]` if its `value` is not an array (like `undefined`).
           // This happens before the current component finished its initialization
           // and has got `$refs` populated. So ignoring this update.
-          this.$refs[formName]
+          this.$refs[formRefName]
         ) {
-          this.$refs[formName].validate(() => {})
+          this.$refs[formRefName].validate(() => {})
         }
       }
+    },
+
+    /**
+     * @param {IPropertyBaseView} field
+     * @return {string}
+     */
+    getFieldRefName (field) {
+      return fieldRefPrefix + field.name
     },
 
     cancelForm () {
@@ -240,7 +251,7 @@ export default {
     },
 
     acceptForm () {
-      this.$refs[formName].validate((isValid) => {
+      this.$refs[formRefName].validate((isValid) => {
         if (isValid) {
           this.$emit('accept')
         }
@@ -302,6 +313,23 @@ export default {
       return _.isDate(date)
         ? date.toISOString()
         : date
+    },
+
+    /**
+     * @param {IPropertyBaseView} field
+     */
+    handleNumberInputFocus (field) {
+      let numberComponent = this.$refs[this.getFieldRefName(field)]
+
+      // Почему-то в данном случае, с числовым полем,
+      // в реф помещается массив компонентов
+      if (_.isArray(numberComponent)) numberComponent = numberComponent[0]
+
+      // Внутреннее устройство `el-input-number`
+      // TODO Поменять после принятия ПР
+      const numberInputComponent = numberComponent.$refs.input
+
+      numberInputComponent.select()
     },
   },
 }

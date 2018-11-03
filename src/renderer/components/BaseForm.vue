@@ -88,10 +88,11 @@
       <!-- TODO make `picker-options` optional -->
       <el-date-picker
         v-if="field.type === 'datetime' || field.type === 'daterange'"
+        :ref="getFieldRefName(field)"
         :value="prepareDatepickerInputValue(formData[field.name])"
         :type="field.type"
         :picker-options="datePickerOptions"
-        @input="val => changeField(field, transformDatepickerOutputPayload(val))"
+        @input="val => handleDatePickerInput(field, val)"
       />
 
     </el-form-item>
@@ -246,6 +247,19 @@ export default {
       return fieldRefPrefix + field.name
     },
 
+    /**
+     * @param {IPropertyBaseView} field
+     * @return {VueComponent}
+     */
+    getRef (field) {
+      let component = this.$refs[this.getFieldRefName(field)]
+
+      // Почему-то в случае рефов полей, в реф помещается массив компонентов
+      if (_.isArray(component)) component = component[0]
+
+      return component
+    },
+
     cancelForm () {
       this.$emit('cancel')
     },
@@ -319,17 +333,49 @@ export default {
      * @param {IPropertyBaseView} field
      */
     handleNumberInputFocus (field) {
-      let numberComponent = this.$refs[this.getFieldRefName(field)]
-
-      // Почему-то в данном случае, с числовым полем,
-      // в реф помещается массив компонентов
-      if (_.isArray(numberComponent)) numberComponent = numberComponent[0]
+      let numberComponent = this.getRef(field)
 
       // Внутреннее устройство `el-input-number`
       // TODO Поменять после принятия ПР
       const numberInputComponent = numberComponent.$refs.input
 
       numberInputComponent.select()
+    },
+
+    /**
+     * @param {IPropertyBaseView} field
+     * @param {DateObjInput} value
+     */
+    handleDatePickerInput (field, value) {
+      // <закрытие пикера>
+      // (выполнять до обновления значения, т.к. имеются проверки по старому значению)
+      if (field.type === 'datetime') {
+        // Если прежде не было значения или в значении поменялась дата, а время осталось прежним,
+        // закрыть пикер, т.к. в контексте проекта время меняется очень редко,
+        // и для этого проще переоткрыть пикер, чем постоянно его закрывать руками
+
+        let dateComponent = this.getRef(field)
+
+        const dayDuration = 1000 * 60 * 60 * 24
+        const timezoneOffset = (new Date()).getTimezoneOffset() * 60 * 1000
+        const newValueTimePart = (value.getTime() - timezoneOffset) % dayDuration
+        const oldValueDateObj = this.toDateObject(this.formData[field.name])
+        let oldValueTimePart = (oldValueDateObj.getTime() - timezoneOffset) % dayDuration
+
+        // Из пикера всегда приходят значения без миллисекунд,
+        // поэтому если прежнее значение имеет миллисекунды, игнорировать их
+        oldValueTimePart = oldValueTimePart - (oldValueTimePart % 1000)
+
+        if (
+          !this.formData[field.name] ||
+          (value && newValueTimePart === oldValueTimePart)
+        ) {
+          dateComponent.handleClose()
+        }
+      }
+      // </закрытие пикера>
+
+      this.changeField(field, this.transformDatepickerOutputPayload(value))
     },
   },
 }

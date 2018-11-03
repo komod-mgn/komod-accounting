@@ -65,7 +65,7 @@
   "dependencies": {
     "axios": "^0.16.1",
     "electron-context-menu": "^0.9.1",
-    "element-ui": "^2.4.9",
+    "element-ui": "github:st-sloth/element#add-select-filterchange-build",
     "fs-extra": "^6.0.1",
     "lodash": "^4.17.10",
     "lowdb": "^1.0.0",

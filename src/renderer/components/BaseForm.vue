@@ -54,10 +54,12 @@
         default-first-option
         class="ref-select"
         @input="val => changeField(field, val)"
+        @filter-change="val => $set(selectSearches, field.name, val)"
       >
         <create-client-hack-button
           v-if="field.addCreateClientHackButton"
           slot="prefix"
+          :field-search="selectSearches[field.name]"
           class="ref-select__create-btn"
           @item-create="item => changeField(field, item.id)"
         />
@@ -159,6 +161,7 @@ export default {
           return time.getTime() > Date.now()
         },
       },
+      selectSearches: {},
     }
   },
 

@@ -46,6 +46,14 @@ import ClientsPageView from '@/views/ClientsPageView'
 export default {
   name: 'CreateClientHackButton',
 
+  props: {
+    fieldSearch: {
+      type: String,
+      required: false,
+      default: '',
+    },
+  },
+
   // components: {
   // },
 
@@ -85,7 +93,26 @@ export default {
     },
 
     getItemCreationTemplateModel () {
-      return new KomodClient()
+      const newClient = new KomodClient()
+
+      if (this.fieldSearch) {
+        // Вычленить из поисковой строки фамилию и имя
+        const match = this.fieldSearch.trim().match(/([^ ]+)( +(.+))?/)
+
+        if (match) {
+          const [ , lastName, , firstName ] = match
+
+          // Озаглавить все первые буквы
+          if (lastName) {
+            newClient.lastName = lastName.replace(/[\wа-яА-Я]+/g, word => word[0].toUpperCase() + word.slice(1))
+          }
+          if (firstName) {
+            newClient.firstName = firstName.replace(/[\wа-яА-Я]+/g, word => word[0].toUpperCase() + word.slice(1))
+          }
+        }
+      }
+
+      return newClient
     },
 
     async submitItemCreationModal (acceptedItem) {

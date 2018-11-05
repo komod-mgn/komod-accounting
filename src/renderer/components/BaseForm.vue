@@ -15,6 +15,7 @@
 
       <el-input
         v-if="field.type === 'string'"
+        :ref="getFieldRefName(field)"
         :value="formData[field.name]"
         clearable
         @input="val => changeField(field, val)"
@@ -349,35 +350,96 @@ export default {
      * @param {DateObjInput} value
      */
     handleDatePickerInput (field, value) {
-      // <закрытие пикера>
-      // (выполнять до обновления значения, т.к. имеются проверки по старому значению)
+      let doneWithField = false
+
       if (field.type === 'datetime') {
-        // Если прежде не было значения или в значении поменялась дата, а время осталось прежним,
-        // закрыть пикер, т.к. в контексте проекта время меняется очень редко,
-        // и для этого проще переоткрыть пикер, чем постоянно его закрывать руками
+        // В контроле с датой и временем НЕзаконченным изменением
+        // надо считать изменение в контроле времени в пикере.
+        // Но как понять откуда пришло изменение - из пикера
+        // или из поля ввода - не известно - всегда эмитится только `input`.
+        // Поэтому считаем, что изменение из контрола времени,
+        // если изменлось только время, при этом игнорируя разницу миллисекунд
+        // (из пикера всегда приходят значения без миллисекунд).
 
-        let dateComponent = this.getRef(field)
+        // Однако, с такой логикой при изменении только времени
+        // в виде выбора текущего дня / кнопки "Сейчас" / редактирования поля,
+        // не отрабатывает переключение на следующее поле
+        // (окончание работы с текущим - `doneWithField`).
+        // Вообще, время фактически используется только упорядочивания
+        // событий, и вручную почти никогда не редактируется,
+        // и используется автоматически поставленное.
+        // Поэтому компромиссным решением является
+        // завершение на любое изменение - так будут
+        // считаться завершением перечисленные выбор текущего дня и т.д.,
+        // но будет "неработоспособным" редактирование времени в контроле времени
+        // (но редактирование через ввод в поле ввода будет работать).
+        //
+        // const oldValueDateObj = this.toDateObject(this.formData[field.name])
+        //
+        // if (!oldValueDateObj || !value) {
+        //   doneWithField = true
+        // } else {
+        //   const oldYear = oldValueDateObj.getFullYear()
+        //   const oldMonth = oldValueDateObj.getMonth()
+        //   const oldDay = oldValueDateObj.getDate()
+        //   const oldHour = oldValueDateObj.getHours()
+        //   const oldMinute = oldValueDateObj.getMinutes()
+        //   const oldSeconds = oldValueDateObj.getSeconds()
+        //
+        //   const newYear = value.getFullYear()
+        //   const newMonth = value.getMonth()
+        //   const newDay = value.getDate()
+        //   const newHour = value.getHours()
+        //   const newMinute = value.getMinutes()
+        //   const newSeconds = value.getSeconds()
+        //
+        //   if (
+        //     oldYear === newYear &&
+        //     oldMonth === newMonth &&
+        //     oldDay === newDay &&
+        //     (
+        //       oldHour !== newHour ||
+        //       oldMinute !== newMinute ||
+        //       oldSeconds !== newSeconds ||
+        //       // Бывает, что при работе с контролом времени,
+        //       // эмитится уже установленное значение,
+        //       // поэтому, для в таких ситуациях также остаемся в поле
+        //       value.getTime() === oldValueDateObj.getTime()
+        //     )
+        //   ) {
+        //     doneWithField = false
+        //   } else {
+        //     doneWithField = true
+        //   }
+        // }
+        doneWithField = true
+      }
 
-        const dayDuration = 1000 * 60 * 60 * 24
-        const timezoneOffset = (new Date()).getTimezoneOffset() * 60 * 1000
-        const newValueTimePart = (value.getTime() - timezoneOffset) % dayDuration
-        const oldValueDateObj = this.toDateObject(this.formData[field.name])
-        let oldValueTimePart = (oldValueDateObj.getTime() - timezoneOffset) % dayDuration
-
-        // Из пикера всегда приходят значения без миллисекунд,
-        // поэтому если прежнее значение имеет миллисекунды, игнорировать их
-        oldValueTimePart = oldValueTimePart - (oldValueTimePart % 1000)
+      if (field.type === 'daterange') {
+        // В диапазоне считать изменение законченным,
+        // если оба конца установлены или сброшены
 
         if (
-          !this.formData[field.name] ||
-          (value && newValueTimePart === oldValueTimePart)
+          !value ||
+          (_.isArray(value) && value.length === 2)
         ) {
-          dateComponent.handleClose()
+          doneWithField = true
         }
       }
-      // </закрытие пикера>
 
+      // Обновление значения в конце, т.к. предыдущий код зависит от предыдущего значения
       this.changeField(field, this.transformDatepickerOutputPayload(value))
+
+      if (doneWithField) {
+        // При фокусе следующего поля пикер не закрывается,
+        // поэтому закрываем самостоятельно через _приватный_ метод
+        let dateComponent = this.getRef(field)
+        dateComponent.handleClose()
+
+        this.$nextTick(() => {
+          this.focusNextField(field)
+        })
+      }
     },
 
     /**
@@ -385,35 +447,70 @@ export default {
      * @param {*} value
      */
     handleSelectInput (field, value) {
-      // <закрытие дропдауна>
-      // (выполнять до обновления значения, т.к. имеются проверки по старому значению)
+      let doneWithField = false
+
+      if (
+        field.type === 'enum' ||
+        field.type === 'ref'
+      ) {
+        // С одиночными значениями считать изменение законченным,
+        // если значение было установлено, не сброшено
+        if (value) {
+          doneWithField = true
+        }
+      }
+
       if (
         field.type === 'multienum' ||
         field.type === 'multiref'
       ) {
-        // В селекте с множественным выбором дропдаун остается открытым после выбора элементов.
-        // В контексте использования проще в редких случаях при необоходимости переоткрыть,
-        // чем постоянно закрывать руками.
-
-        let selectComponent = this.getRef(field)
+        // С множественными значениями считать изменение законченным,
+        // если был добавлен элемент, или полностью сброшен массив
 
         const newValue = value || []
         const oldValue = this.formData[field.name] || []
 
-        // Закрываем только если было выбрано новое значение
-        // (а при снятии выделения оставлять)
-        if (newValue.length > oldValue.length) {
-          // Откладывание необходимо, вероятно,
-          // из-за изменения значения ниже в `changeField`
-          // (без этого не закрывается)
-          this.$nextTick(() => {
-            selectComponent.handleClose()
-          })
+        if (
+          newValue.length > oldValue.length ||
+          (newValue.length === 0 && oldValue.length > 0)
+        ) {
+          doneWithField = true
         }
       }
-      // </закрытие дропдауна>
 
+      // Обновление значения в конце, т.к. предыдущий код зависит от предыдущего значения
       this.changeField(field, value)
+
+      if (doneWithField) {
+        this.$nextTick(() => {
+          this.focusNextField(field)
+        })
+      }
+    },
+
+    /**
+     * @param {IPropertyBaseView} field
+     */
+    focusNextField (field) {
+      const passedFieldIdx = this.formView.fields.findIndex(item => item === field)
+      const nextField = this.formView.fields[passedFieldIdx + 1]
+
+      // В любом случае убрать фокус из текущего
+      // TODO (если есть метод)
+      const passedFieldComponent = this.getRef(field)
+
+      if (passedFieldComponent && _.isFunction(passedFieldComponent.blur)) {
+        passedFieldComponent.blur()
+      }
+
+      // Если есть следующее, сфокусировать его
+      if (nextField) {
+        const nextFieldComponent = this.getRef(nextField)
+
+        if (nextFieldComponent && _.isFunction(nextFieldComponent.focus)) {
+          nextFieldComponent.focus()
+        }
+      }
     },
   },
 }

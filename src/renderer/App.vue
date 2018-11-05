@@ -208,6 +208,10 @@ export default {
     width: 100%;
   }
 
+  .el-range-editor .el-range-input {
+    flex: 1 1 0;
+  }
+
   .el-select .el-select__caret {
     color: dimgray !important;
     font-weight: bold;
